@@ -1,0 +1,79 @@
+name = "globaltimeconvert"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Versioned preview URLs — needed for PR ephemeral previews via the
+# `wrangler versions upload --preview-alias …` flow in
+# .github/workflows/preview.yml. Each PR gets its own
+# `pr-<N>-globaltimeconvert.<account>.workers.dev` URL.
+preview_urls = true
+
+# Custom domain mapping. `custom_domain = true` tells Cloudflare to manage
+# the DNS + certificate end-to-end (it adds a managed A record at the apex
+# pointing to the CF edge, provisions an SSL cert, and routes /* to this
+# Worker). The domain must already be added to your Cloudflare account.
+[[routes]]
+pattern = "globaltimeconvert.com"
+custom_domain = true
+
+# Note: `main` and `[assets]` are intentionally omitted here — the Astro
+# Cloudflare adapter generates its own deployment manifest under
+# `dist/` after `astro build`. This file holds only the shared bindings
+# and runtime config that both `astro build` and `wrangler deploy` consume.
+
+[observability]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# Bindings
+# ---------------------------------------------------------------------------
+# Analytics Engine datasets are auto-provisioned on first write.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "globaltimeconvert"
+database_id = "b8e57f6e-9fc5-4d40-bbf4-61722d8173dd"
+migrations_dir = "migrations"
+
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "globaltimeconvert_events"
+
+[[kv_namespaces]]
+binding = "OG_CACHE"
+id = "053181b131944f2c80a0d4450c119f18"
+
+# The Astro Cloudflare adapter auto-injects a SESSION KV binding for
+# Astro Sessions. We're not using sessions in v1, but the binding still
+# needs an id at deploy time. Run before first deploy:
+#
+#   npm run kv:create:session   -> prints id, paste below and uncomment.
+#
+[[kv_namespaces]]
+binding = "SESSION"
+id = "042dd27ca50941f49582616949bbe846"
+
+# ---------------------------------------------------------------------------
+# Cron triggers
+# ---------------------------------------------------------------------------
+# Phase 8 introduced lazy salt rotation (no cron needed) and Phase 9 reads AE
+# directly via SQL API (no D1 rollup cron needed). Crons are reserved for
+# future periodic tasks; an empty list disables them entirely. Re-enable when
+# we add background work.
+# [triggers]
+# crons = []
+
+# ---------------------------------------------------------------------------
+# Vars
+# ---------------------------------------------------------------------------
+[vars]
+ENVIRONMENT = "production"
+# Cloudflare account ID — paste yours in. Used by /admin to query the
+# Analytics Engine SQL API. Find it on the right sidebar of any page in
+# https://dash.cloudflare.com.
+CF_ACCOUNT_ID = "ba409674523f8a3cd174a19177ba49c2"
+
+# CF_API_TOKEN is a SECRET — never commit it. Set with:
+#   wrangler secret put CF_API_TOKEN
+# Token needs the "Account Analytics" permission. Create at:
+#   https://dash.cloudflare.com/profile/api-tokens

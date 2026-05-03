@@ -1,0 +1,41 @@
+---
+import { t, pathFor, type Locale } from '../lib/i18n';
+import ThemeToggle from './islands/ThemeToggle.svelte';
+
+interface Props {
+  lang?: Locale;
+}
+const { lang = 'en' } = Astro.props;
+---
+
+<header class="sticky top-0 z-40 border-b border-hair bg-white/85 backdrop-blur-md dark:bg-neutral-950/85">
+  <div class="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+    <a href={pathFor('/', lang)} class="flex items-center gap-2">
+      <svg
+        class="h-[18px] w-[18px]"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9.25" stroke="currentColor" stroke-width="1.5" />
+        <path
+          d="M12 7v5l3.2 2"
+          stroke="var(--color-accent-500)"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span class="text-[15px] font-medium tracking-tight">{t('ui.site.name', lang)}</span>
+    </a>
+    <nav class="flex items-center gap-7 text-[13.5px] text-neutral-600 dark:text-neutral-400">
+      <a href={pathFor('/about', lang)} class="hover:text-neutral-900 dark:hover:text-neutral-100">
+        {t('ui.nav.about', lang)}
+      </a>
+      <a href={pathFor('/donate', lang)} class="hover:text-neutral-900 dark:hover:text-neutral-100">
+        {t('ui.nav.donate', lang)}
+      </a>
+      <ThemeToggle client:load />
+    </nav>
+  </div>
+</header>

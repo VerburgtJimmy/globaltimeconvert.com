@@ -1,0 +1,30 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# wrangler / cloudflare
+.wrangler/
+.dev.vars
+.dev.vars.local
+!.dev.vars.example
+
+# environment / secrets
+.env
+.env.local
+.env.*.local
+
+# data dumps (raw GeoNames etc.)
+data/raw/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
+
+# typescript
+*.tsbuildinfo

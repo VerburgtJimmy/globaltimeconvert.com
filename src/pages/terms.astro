@@ -1,0 +1,41 @@
+---
+import Layout from '../components/Layout.astro';
+
+export const prerender = true;
+---
+
+<Layout
+  title="Terms — globaltimeconvert.com"
+  description="The terms under which this site is offered."
+  breadcrumbs={[
+    { name: 'Home', url: '/' },
+    { name: 'Terms', url: '/terms' },
+  ]}
+  localesAvailable={['en']}
+>
+  <div class="mx-auto max-w-2xl px-6 pt-10">
+    <nav class="text-[13px] text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-neutral-900 dark:hover:text-neutral-100">Home</a>
+      <span class="mx-2 text-neutral-300 dark:text-neutral-700">/</span>
+      <span>Terms</span>
+    </nav>
+  </div>
+
+  <article class="mx-auto max-w-2xl px-6 pt-12 pb-24">
+    <h1 class="text-[34px] leading-[1.1] font-semibold tracking-tight sm:text-[42px]">
+      Terms
+    </h1>
+    <div class="mt-8 space-y-5 text-[16.5px] leading-[1.75] text-neutral-700 dark:text-neutral-300">
+      <p>
+        globaltimeconvert.com is offered free of charge, as-is, with no warranty. We do
+        our best to keep timezone, DST, and city data accurate, but you should not rely on
+        it for booking flights, scheduling surgery, or anything else with real-world
+        consequences.
+      </p>
+      <p>
+        You may use the site for any lawful purpose. Automated scraping is discouraged but
+        not blocked — if you need bulk data, contact us about the upcoming public API.
+      </p>
+    </div>
+  </article>
+</Layout>

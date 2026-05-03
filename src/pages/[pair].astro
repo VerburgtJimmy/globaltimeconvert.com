@@ -1,0 +1,90 @@
+---
+// Single-segment dispatcher (English root).
+//
+//   /{locale}                       → render HomePage in that locale
+//   /{time}-{from}-to-{to}          → TimePairPage
+//   /{time}-{city}                  → TimeCityPage
+//   /{from}-to-{to}                 → PairPage
+//   anything else                   → 404
+//
+// All DB fetches happen here so component-level slug-not-found can return a
+// proper 404 status (component-level Responses don't halt the page render).
+
+import HomePage from '../components/pages/HomePage.astro';
+import PairPage from '../components/pages/PairPage.astro';
+import TimeCityPage from '../components/pages/TimeCityPage.astro';
+import TimePairPage from '../components/pages/TimePairPage.astro';
+import { getDb, getCityBySlug, type CityWithCountry } from '../lib/db';
+import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../lib/i18n';
+import { parsePairSlug } from '../lib/slugs';
+import {
+  parseTimePrefix,
+  canonicalFormat,
+  formatTimePrefix,
+  type TimeOfDay,
+} from '../lib/time-slugs';
+
+const { pair: slug } = Astro.params;
+if (!slug) return new Response('Not found', { status: 404 });
+
+const lang: Locale = 'en';
+const db = getDb();
+
+// 1. Locale homepage dispatch.
+if (isValidLocale(slug)) {
+  if (slug === DEFAULT_LOCALE) return Astro.redirect('/', 308);
+  // Falls through to <HomePage lang={slug} /> below.
+}
+
+// 2. Parse a possible time prefix.
+const tp = !isValidLocale(slug) ? parseTimePrefix(slug) : null;
+
+// Redirect non-canonical time format to canonical for this locale.
+if (tp && tp.format !== canonicalFormat(lang)) {
+  return Astro.redirect(`/${formatTimePrefix(tp.time, lang)}-${tp.rest}`, 302);
+}
+
+// 3. Resolve cities for whichever pattern matched.
+let timeCity: CityWithCountry | null = null;
+let timePair: { from: CityWithCountry; to: CityWithCountry } | null = null;
+let pair: { from: CityWithCountry; to: CityWithCountry } | null = null;
+let time: TimeOfDay | null = null;
+
+if (tp) {
+  time = tp.time;
+  const pairSlugs = parsePairSlug(tp.rest);
+  if (pairSlugs) {
+    const [from, to] = await Promise.all([
+      getCityBySlug(db, pairSlugs.from, lang),
+      getCityBySlug(db, pairSlugs.to, lang),
+    ]);
+    if (!from || !to) return new Response('Not found', { status: 404 });
+    timePair = { from, to };
+  } else {
+    const c = await getCityBySlug(db, tp.rest, lang);
+    if (!c) return new Response('Not found', { status: 404 });
+    timeCity = c;
+  }
+} else if (!isValidLocale(slug)) {
+  const pairSlugs = parsePairSlug(slug);
+  if (!pairSlugs) return new Response('Not found', { status: 404 });
+  const [from, to] = await Promise.all([
+    getCityBySlug(db, pairSlugs.from, lang),
+    getCityBySlug(db, pairSlugs.to, lang),
+  ]);
+  if (!from || !to) return new Response('Not found', { status: 404 });
+  pair = { from, to };
+}
+---
+
+{
+  isValidLocale(slug) ? (
+    <HomePage lang={slug as Locale} />
+  ) : timePair && time ? (
+    <TimePairPage lang={lang} time={time} from={timePair.from} to={timePair.to} />
+  ) : timeCity && time ? (
+    <TimeCityPage lang={lang} time={time} city={timeCity} />
+  ) : pair ? (
+    <PairPage lang={lang} from={pair.from} to={pair.to} />
+  ) : null
+}

@@ -1,0 +1,54 @@
+# Production deploy.
+#
+# Triggers on every push to main (i.e. when a PR merges) and via manual
+# "Run workflow" in the Actions tab. Runs typecheck + build, then ships
+# the worker to globaltimeconvert.com via wrangler.
+
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Cancel in-progress prod deploys when a newer commit lands on main; we
+  # only ever want the latest commit live.
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx astro check
+
+      - name: Build
+        run: npx astro build
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # The Astro Cloudflare adapter writes the runtime config under
+          # dist/server/wrangler.json — use that, not the repo-root file.
+          command: deploy --config dist/server/wrangler.json

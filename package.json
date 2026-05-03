@@ -1,0 +1,40 @@
+{
+  "name": "globaltimeconvert",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro build && wrangler dev --config dist/server/wrangler.json",
+    "deploy": "astro build && wrangler deploy --config dist/server/wrangler.json",
+    "astro": "astro",
+    "typecheck": "astro check",
+    "db:create": "wrangler d1 create globaltimeconvert",
+    "db:migrate:local": "wrangler d1 migrations apply globaltimeconvert --local",
+    "db:migrate:remote": "wrangler d1 migrations apply globaltimeconvert --remote",
+    "db:seed:local": "wrangler d1 execute globaltimeconvert --local --file=data/seed.sql",
+    "db:seed:remote": "wrangler d1 execute globaltimeconvert --remote --file=data/seed.sql",
+    "data:import": "node scripts/import-geonames.ts",
+    "data:import:curated": "node scripts/import-curated.ts",
+    "kv:create:og": "wrangler kv namespace create OG_CACHE",
+    "kv:create:session": "wrangler kv namespace create SESSION"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^13.3.0",
+    "@astrojs/svelte": "^8.1.0",
+    "@fontsource-variable/inter": "^5.2.8",
+    "@tailwindcss/vite": "^4.2.4",
+    "astro": "^6.2.1",
+    "svelte": "^5.55.5",
+    "tailwindcss": "^4.2.4",
+    "workers-og": "^0.0.27"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@cloudflare/workers-types": "^4.20260503.1",
+    "@types/node": "^25.6.0",
+    "typescript": "^5",
+    "wrangler": "^4.87.0"
+  }
+}

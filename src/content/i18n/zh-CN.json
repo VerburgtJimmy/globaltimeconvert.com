@@ -1,0 +1,138 @@
+{
+  "ui": {
+    "site": {
+      "name": "globaltimeconvert",
+      "tagline": "快速、清爽的时区转换。",
+      "description": "在城市之间比较时间的最快方式。无广告、无杂乱、无 Cookie。"
+    },
+    "nav": {
+      "home": "首页",
+      "about": "关于",
+      "donate": "捐赠",
+      "privacy": "隐私",
+      "terms": "条款"
+    },
+    "search": {
+      "placeholder": "搜索城市…"
+    },
+    "converter": {
+      "from": "从",
+      "to": "到",
+      "now": "现在",
+      "swap": "交换"
+    },
+    "footer": {
+      "tagline": "一个干净、无广告、无 Cookie 的时区工具。",
+      "donate": "请我们喝杯咖啡",
+      "sponsor": "在 GitHub 上赞助",
+      "copyright": "© {year} globaltimeconvert.com"
+    },
+    "common": {
+      "allCities": "所有城市",
+      "popularCities": "热门城市",
+      "popularPairs": "热门城市对",
+      "timeIn": "{city}的时间",
+      "viewMore": "查看更多",
+      "observesDst": "实行夏令时",
+      "noDst": "不实行夏令时",
+      "back": "返回首页",
+      "home": "首页",
+      "worldClock": "世界时钟",
+      "ofCuratedCities": "{total} 个精选城市中的 {n} 个",
+      "kbdHint": "在任何位置按 {key} 聚焦。",
+      "orTryOneOfThese": "或试试这些",
+      "supportRegion": "支持",
+      "siteRegion": "站点",
+      "languagesRegion": "语言",
+      "noCookiesTrackersAds": "无 Cookie、无追踪器、无广告。",
+      "footerTaglineLong": "为世界时区打造的小型免费工具。由一个人构建和维护。",
+      "timezoneDetails": "时区详情",
+      "ianaTimezone": "IANA 时区",
+      "utcOffset": "UTC 偏移",
+      "abbreviation": "缩写",
+      "daylightSaving": "夏令时",
+      "population": "人口",
+      "country": "国家",
+      "observed": "实行",
+      "notObserved": "不实行",
+      "millionsSuffix": "百万",
+      "thousandsSuffix": "千",
+      "compareIntro": "所有时间均为实时。点击任意城市打开转换器。",
+      "quickPicksHeading": "常用工作时间转换",
+      "quickPicksIntro": "当 {a} 是这个时间时，{b} 是这个时间。日期变化会标注。",
+      "related": "相关",
+      "pickATime": "选择时间",
+      "resetToNow": "重置为现在",
+      "morning": "上午",
+      "afternoon": "下午",
+      "evening": "晚上",
+      "night": "深夜",
+      "nextDay": "（次日）",
+      "sameTime": "相同时间"
+    }
+  },
+
+  "templates": {
+    "page": {
+      "home": {
+        "title": "globaltimeconvert.com — 快速、清爽的时区转换",
+        "h1": "现在几点了，任何地方？",
+        "subtitle": "搜索任意城市。比较时区。跨大洲安排日程。免费、无广告、无追踪——永远。",
+        "popularGrid": { "heading": "现在的时间" },
+        "faq": { "heading": "常见问题" }
+      },
+      "cityClock": {
+        "title": "{city}（{country}）的时间 — 当前本地时间",
+        "h1": "{city}的当前时间",
+        "intro": "{city}位于 {tz} 时区（{offset}）。下方显示{city}当前的本地时间和日期。",
+        "dstYes": "{city}实行夏令时。",
+        "dstNo": "{city}不实行夏令时。",
+        "compareHeading": "{city}时间与其他城市的对比",
+        "metaDescription": "{city}（{country}）的当前本地时间。实时时钟、时区和夏令时信息——无广告、无 Cookie。"
+      },
+      "cityPair": {
+        "title": "{cityA}至{cityB} — 时间转换器",
+        "h1": "{cityA}与{cityB}的时差",
+        "summaryAhead": "现在{cityA}比{cityB}{phrase}。",
+        "summaryBehind": "现在{cityA}比{cityB}{phrase}。",
+        "summarySame": "{cityA}和{cityB}目前在同一时区。",
+        "quickPicks": "常用工作时间转换",
+        "alsoSee": "另请参阅",
+        "metaDescription": "在{cityA}和{cityB}之间转换时间。{cityA}{phrase}{cityB}。比较任何时间，无广告、无 Cookie。",
+        "diffAhead": "快 {n} 小时",
+        "diffBehind": "慢 {n} 小时",
+        "diffSame": "与之相同时区"
+      },
+      "about": {
+        "title": "关于 — globaltimeconvert.com",
+        "description": "为什么我们打造一个干净、无广告、无 Cookie 的时区工具。",
+        "h1": "刻意保持安静。",
+        "p1": "在 2026 年搜索时区转换器，仍会被带到塞满广告、弹窗和 Cookie 提示的页面。globaltimeconvert 走相反的路：快速、干净、低调可靠。",
+        "li1": "· 永远没有广告。",
+        "li2": "· 没有第三方追踪器。",
+        "li3": "· 没有 Cookie，没有指纹识别——所以也没有 Cookie 提示。",
+        "li4": "· 公开我们保留的数据（见隐私页）。",
+        "li5": "· 完全托管在 Cloudflare 的边缘节点上以保证速度。"
+      },
+      "donate": {
+        "title": "帮助保持免费 — globaltimeconvert.com",
+        "description": "globaltimeconvert 是一个个人项目。如果它为你节省了几秒钟，这是支持它的方式。",
+        "h1": "帮助让它一直免费。",
+        "p1": "globaltimeconvert 是一个副项目。一个人、无资助、无路线图会议。整件事——城市数据库、IANA 时区更新、六种语言、服务器账单——都由个人承担。",
+        "p2": "如果该网站让你免去了在脑中算 13 小时差的麻烦，或避免了在竞品页面上点掉三个弹窗，一笔小额的一次性打赏是最干脆的致谢方式。没有会员制，没有特权，没有邮件订阅。只是一个更安静的互联网，被维持运行。",
+        "kofiTitle": "在 Ko-fi 打赏",
+        "kofiSub": "一次性，$3 / $5 / $10",
+        "githubTitle": "GitHub Sponsors",
+        "githubSub": "周期性，$1 / $5 / $25 / 月",
+        "thanks": "赞助者会得到什么：在「关于」页面上一个真诚的感谢（如果你想要），以及为你真正使用的工具付费的温暖感觉。没有付费版。也不会有。"
+      },
+      "notFound": {
+        "title": "页面未找到 — globaltimeconvert.com",
+        "description": "该页面不存在。请尝试首页或搜索城市。",
+        "h1": "找不到该页面。",
+        "p": "链接可能已失效，或该城市的 slug 还不在我们的数据集中。请从首页搜索试试。",
+        "back": "返回首页"
+      }
+    }
+  }
+}

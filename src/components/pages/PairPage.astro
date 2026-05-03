@@ -1,0 +1,218 @@
+---
+// Shared city-pair page body (the converter). Receives the already-resolved
+// cities from the page entrypoint (responsibility is split this way because
+// component-level Responses don't halt the parent page's render in Astro).
+
+import Layout from '../Layout.astro';
+import TimeSlider from '../islands/TimeSlider.svelte';
+import YourTime from '../islands/YourTime.svelte';
+import type { CityWithCountry } from '../../lib/db';
+import {
+  formatInZone,
+  diffMin,
+  describeDiff,
+} from '../../lib/tz';
+import { t, pathFor, diffPhrase, type Locale } from '../../lib/i18n';
+
+interface Props {
+  lang: Locale;
+  from: CityWithCountry;
+  to: CityWithCountry;
+}
+
+const { lang, from: a, to: b } = Astro.props;
+
+const now = new Date();
+const aTime = formatInZone(now, a.timezone_id);
+const bTime = formatInZone(now, b.timezone_id);
+const m = diffMin(a.timezone_id, b.timezone_id, now);
+const diff = describeDiff(m);
+const localizedDiff = diff.same ? '' : diffPhrase(diff, lang);
+
+// Quick-pick rows: convert common business hours from A to B.
+const QUICK_HOURS = [8, 10, 12, 14, 16, 18, 20];
+const quickPicks = QUICK_HOURS.map((hourInA) => {
+  const aToday = formatInZone(now, a.timezone_id);
+  const [Y, M, D] = aToday.date.split('-').map((s) => Number.parseInt(s, 10));
+  const utcGuess = Date.UTC(Y!, (M ?? 1) - 1, D ?? 1, hourInA, 0, 0);
+  const at = new Date(utcGuess - aTime.offsetMin * 60_000);
+  const aResult = formatInZone(at, a.timezone_id);
+  const bResult = formatInZone(at, b.timezone_id);
+  return {
+    a: aResult,
+    b: bResult,
+    bDayShifted: bResult.weekday !== aResult.weekday,
+  };
+});
+
+const initialAnchorMin = Math.round((aTime.hour * 60 + aTime.minute) / 30) * 30;
+
+const breadcrumbs = [
+  { name: t('ui.common.home', lang), url: pathFor('/', lang) },
+  {
+    name: `${a.display_name} ↔ ${b.display_name}`,
+    url: pathFor(`/${a.slug}-to-${b.slug}`, lang),
+  },
+];
+
+const summaryKey = diff.same
+  ? 'templates.page.cityPair.summarySame'
+  : diff.ahead
+    ? 'templates.page.cityPair.summaryAhead'
+    : 'templates.page.cityPair.summaryBehind';
+const summary = t(summaryKey, lang, {
+  cityA: a.display_name,
+  cityB: b.display_name,
+  phrase: localizedDiff,
+});
+
+const title = t('templates.page.cityPair.title', lang, {
+  cityA: a.display_name,
+  cityB: b.display_name,
+});
+const description = t('templates.page.cityPair.metaDescription', lang, {
+  cityA: a.display_name,
+  cityB: b.display_name,
+  phrase: localizedDiff,
+});
+---
+
+<Layout
+  title={title}
+  description={description}
+  lang={lang}
+  breadcrumbs={breadcrumbs}
+>
+  <div class="mx-auto max-w-4xl px-6 pt-10">
+    <nav class="text-[13px] text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
+      <a href={pathFor('/', lang)} class="hover:text-neutral-900 dark:hover:text-neutral-100">
+        {t('ui.common.home', lang)}
+      </a>
+      <span class="mx-2 text-neutral-300 dark:text-neutral-700">/</span>
+      <span>{a.display_name} ↔ {b.display_name}</span>
+    </nav>
+  </div>
+
+  <section class="mx-auto max-w-4xl px-6 pt-10 pb-12">
+    <h1 class="text-[26px] font-semibold tracking-tight sm:text-3xl">
+      {t('templates.page.cityPair.h1', lang, {
+        cityA: a.display_name,
+        cityB: b.display_name,
+      })}
+    </h1>
+    <p class="mt-4 text-[16px] leading-7 text-neutral-600 sm:text-[17px] dark:text-neutral-400">
+      {summary}
+    </p>
+  </section>
+
+  <!-- Side-by-side cards -->
+  <section class="mx-auto max-w-4xl px-6 pb-12">
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      {[
+        { city: a, time: aTime, label: 'A' as const },
+        { city: b, time: bTime, label: 'B' as const },
+      ].map(({ city, time, label }) => (
+        <div class="rounded-2xl border border-hair p-7">
+          <div class="mb-6 flex items-baseline justify-between">
+            <div>
+              <div class="text-[20px] font-semibold tracking-tight">
+                <a href={pathFor(`/time-in-${city.slug}`, lang)} class="hover:text-accent-600">
+                  {city.display_name}
+                </a>
+              </div>
+              <div class="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400">
+                {city.country_name}
+              </div>
+            </div>
+            <span class="eyebrow">{label}</span>
+          </div>
+          <div
+            class="display-time text-5xl leading-none sm:text-6xl"
+            data-clock={city.timezone_id}
+            data-format="HH:mm"
+          >
+            {String(time.hour).padStart(2, '0')}:{String(time.minute).padStart(2, '0')}
+          </div>
+          <div
+            class="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-neutral-500 dark:text-neutral-400"
+            data-clock={city.timezone_id}
+            data-format="weekday-tz-offset"
+          >
+            {time.weekday} · {time.abbr}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Your time -->
+  <section class="mx-auto max-w-4xl px-6 pb-8">
+    <YourTime
+      client:load
+      momentIso={now.toISOString()}
+      sourceLabel={`${t('ui.converter.now', lang)} in ${a.display_name}`}
+    />
+  </section>
+
+  <!-- Time slider -->
+  <TimeSlider
+    client:visible
+    fromTz={a.timezone_id}
+    toTz={b.timezone_id}
+    fromCity={a.display_name}
+    toCity={b.display_name}
+    initialAnchorMin={initialAnchorMin}
+  />
+
+  <!-- Quick-pick table -->
+  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
+    <h2 class="text-[20px] font-semibold tracking-tight sm:text-[22px]">
+      {t('ui.common.quickPicksHeading', lang)}
+    </h2>
+    <p class="mt-2 mb-7 text-[14px] text-neutral-500 dark:text-neutral-400">
+      {t('ui.common.quickPicksIntro', lang, { a: a.display_name, b: b.display_name })}
+    </p>
+    <div class="border-t border-hair">
+      <div class="grid grid-cols-2 border-b border-hair px-1 py-3 text-[11px] tracking-[0.12em] text-neutral-400 uppercase">
+        <div>{a.display_name}</div>
+        <div>{b.display_name}</div>
+      </div>
+      <div>
+        {quickPicks.map((p) => (
+          <div class="grid grid-cols-2 border-b border-hair px-1 py-4 text-[15px]">
+            <div>
+              <span class="display-time">
+                {String(p.a.hour).padStart(2, '0')}:{String(p.a.minute).padStart(2, '0')}
+              </span>
+              <span class="ml-2 text-[13px] text-neutral-400">{p.a.weekday.slice(0, 3)}</span>
+            </div>
+            <div>
+              <span class="display-time">
+                {String(p.b.hour).padStart(2, '0')}:{String(p.b.minute).padStart(2, '0')}
+              </span>
+              <span class={'ml-2 text-[13px] ' + (p.bDayShifted ? 'text-accent-600' : 'text-neutral-400')}>
+                {p.b.weekday.slice(0, 3)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Related -->
+  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
+    <h2 class="eyebrow mb-5">{t('ui.common.related', lang)}</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href={pathFor(`/${b.slug}-to-${a.slug}`, lang)} class="pill">
+        {b.display_name} → {a.display_name}
+      </a>
+      <a href={pathFor(`/time-in-${a.slug}`, lang)} class="pill">
+        {t('ui.common.timeIn', lang, { city: a.display_name })}
+      </a>
+      <a href={pathFor(`/time-in-${b.slug}`, lang)} class="pill">
+        {t('ui.common.timeIn', lang, { city: b.display_name })}
+      </a>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,130 @@
+---
+import StructuredData from './StructuredData.astro';
+import {
+  buildOrganization,
+  buildWebSite,
+  buildBreadcrumbList,
+  buildAlternates,
+  type BreadcrumbItem,
+} from '../../lib/seo';
+import { splitLocale, SUPPORTED_LOCALES, type Locale } from '../../lib/i18n';
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string | URL;
+  noindex?: boolean;
+  ogImage?: string;
+  lang?: Locale;
+  /** Breadcrumb trail. Emits BreadcrumbList JSON-LD when provided. */
+  breadcrumbs?: BreadcrumbItem[];
+  /** Extra JSON-LD schemas (FAQPage, etc.). */
+  extraStructuredData?: Array<Record<string, unknown>>;
+  /**
+   * Locales this URL exists in. Defaults to all supported locales. Pages that
+   * don't translate (privacy, terms in v1) should pass `['en']` so we don't
+   * emit hreflang to non-existent /es/privacy etc.
+   */
+  localesAvailable?: readonly Locale[];
+}
+
+const {
+  title,
+  description,
+  canonical,
+  noindex = false,
+  ogImage,
+  lang = 'en',
+  breadcrumbs,
+  extraStructuredData = [],
+  localesAvailable = SUPPORTED_LOCALES,
+} = Astro.props;
+
+const site = Astro.site ?? new URL('/', Astro.url);
+const canonicalHref = canonical
+  ? new URL(canonical, site).toString()
+  : Astro.url.toString();
+
+// Path-only canonical (drops query string + hash).
+const canonicalPath = (() => {
+  try {
+    const u = new URL(canonicalHref);
+    u.search = '';
+    u.hash = '';
+    return u.toString();
+  } catch {
+    return canonicalHref;
+  }
+})();
+
+// Strip the locale prefix to get the "neutral" path that hreflang alternates
+// are built from.
+const { path: neutralPath } = splitLocale(new URL(canonicalPath).pathname);
+const alternates = buildAlternates(neutralPath, site, localesAvailable);
+
+// Auto-derive og:image URL from the canonical path. Pages can override by
+// passing `ogImage` explicitly. Locale URLs share the EN OG image — the
+// generated PNG is mostly typographic and works cross-locale (Phase 7+ may
+// emit per-locale variants if Search Console traffic warrants it).
+function deriveOgPath(neutral: string): string {
+  if (neutral === '/') return '/og/home.png';
+  const trimmed = neutral.replace(/^\//, '').replace(/\/$/, '');
+  return `/og/${trimmed}.png`;
+}
+const ogImageUrl = ogImage
+  ? new URL(ogImage, site).toString()
+  : new URL(deriveOgPath(neutralPath), site).toString();
+
+// JSON-LD assembly. Organization always; WebSite only on homepage of any
+// locale; BreadcrumbList when provided.
+const isHomepage = neutralPath === '/';
+const ldGraph: Array<Record<string, unknown>> = [
+  buildOrganization(site),
+  ...(isHomepage ? [buildWebSite(site)] : []),
+  ...(breadcrumbs && breadcrumbs.length > 0
+    ? [buildBreadcrumbList(breadcrumbs, site)]
+    : []),
+  ...extraStructuredData,
+];
+
+// og:locale is BCP-47 with underscore. Map our codes to common OG locale strings.
+const ogLocale: Record<Locale, string> = {
+  en: 'en_US',
+  es: 'es_ES',
+  pt: 'pt_PT',
+  de: 'de_DE',
+  nl: 'nl_NL',
+  'zh-CN': 'zh_CN',
+};
+---
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="generator" content={Astro.generator} />
+<title>{title}</title>
+{description && <meta name="description" content={description} />}
+<link rel="canonical" href={canonicalPath} />
+{noindex && <meta name="robots" content="noindex,nofollow" />}
+
+{alternates.map(({ hreflang, href }) => (
+  <link rel="alternate" hreflang={hreflang} href={href} />
+))}
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+{description && <meta property="og:description" content={description} />}
+<meta property="og:url" content={canonicalPath} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content="globaltimeconvert.com" />
+<meta property="og:locale" content={ogLocale[lang]} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+{description && <meta name="twitter:description" content={description} />}
+<meta name="twitter:image" content={ogImageUrl} />
+
+<StructuredData data={ldGraph} />

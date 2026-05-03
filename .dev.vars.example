@@ -1,0 +1,4 @@
+# Local dev secrets — copy to .dev.vars (gitignored) and fill in.
+# Picked up by `wrangler pages dev` and the platformProxy adapter.
+
+ENVIRONMENT="development"

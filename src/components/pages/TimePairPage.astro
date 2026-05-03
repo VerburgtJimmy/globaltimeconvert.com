@@ -1,0 +1,129 @@
+---
+// Specific-time pair page: /9am-miami-to-amsterdam, /14-30-tokyo-to-london.
+//
+// Captures search like "9am miami in amsterdam", "14:30 tokyo in london".
+// Two side-by-side cards locked at the specified time on each side, plus
+// the user's own timezone via the YourTime island.
+
+import Layout from '../Layout.astro';
+import YourTime from '../islands/YourTime.svelte';
+import type { CityWithCountry } from '../../lib/db';
+import { formatInZone, momentForWallTime, formatOffset } from '../../lib/tz';
+import { displayTime, type TimeOfDay } from '../../lib/time-slugs';
+import { t, pathFor, type Locale } from '../../lib/i18n';
+
+interface Props {
+  lang: Locale;
+  time: TimeOfDay;
+  from: CityWithCountry;
+  to: CityWithCountry;
+}
+
+const { lang, time, from: a, to: b } = Astro.props;
+
+// UTC moment representing `time` wall-clock in city A's zone today.
+const moment = momentForWallTime(time, a.timezone_id);
+const aFmt = formatInZone(moment, a.timezone_id);
+const bFmt = formatInZone(moment, b.timezone_id);
+const sourceTimeStr = displayTime(time, lang);
+const targetTimeStr = displayTime({ hour: bFmt.hour, minute: bFmt.minute }, lang);
+const dayShift = aFmt.weekday !== bFmt.weekday;
+
+const title = `${sourceTimeStr} ${a.display_name} = ${targetTimeStr} ${b.display_name} — ${t('ui.site.name', lang)}`;
+const description = `When it's ${sourceTimeStr} in ${a.display_name}, it's ${targetTimeStr} in ${b.display_name}. Convert any time between the two, no ads, no cookies.`;
+
+const breadcrumbs = [
+  { name: t('ui.common.home', lang), url: pathFor('/', lang) },
+  {
+    name: `${sourceTimeStr} ${a.display_name} → ${b.display_name}`,
+    url: Astro.url.pathname,
+  },
+];
+---
+
+<Layout
+  title={title}
+  description={description}
+  lang={lang}
+  breadcrumbs={breadcrumbs}
+>
+  <div class="mx-auto max-w-4xl px-6 pt-10">
+    <nav class="text-[13px] text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
+      <a href={pathFor('/', lang)} class="hover:text-neutral-900 dark:hover:text-neutral-100">
+        {t('ui.common.home', lang)}
+      </a>
+      <span class="mx-2 text-neutral-300 dark:text-neutral-700">/</span>
+      <span>{sourceTimeStr} {a.display_name} → {b.display_name}</span>
+    </nav>
+  </div>
+
+  <section class="mx-auto max-w-4xl px-6 pt-10 pb-12">
+    <h1 class="text-[26px] font-semibold tracking-tight sm:text-3xl">
+      {sourceTimeStr} {a.display_name} = {targetTimeStr} {b.display_name}
+    </h1>
+    <p class="mt-4 text-[16px] leading-7 text-neutral-600 sm:text-[17px] dark:text-neutral-400">
+      When it's <span class="font-medium text-neutral-900 dark:text-neutral-100">{sourceTimeStr}</span>
+      in {a.display_name}, it's <span class="font-medium text-neutral-900 dark:text-neutral-100">{targetTimeStr}</span> in {b.display_name}{dayShift ? ' (next day)' : ''}.
+    </p>
+  </section>
+
+  <!-- Side-by-side cards locked at the specified time -->
+  <section class="mx-auto max-w-4xl px-6 pb-12">
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+      {[
+        { city: a, fmt: aFmt, label: 'A' as const },
+        { city: b, fmt: bFmt, label: 'B' as const },
+      ].map(({ city, fmt, label }) => (
+        <div class="rounded-2xl border border-hair p-7">
+          <div class="mb-6 flex items-baseline justify-between">
+            <div>
+              <div class="text-[20px] font-semibold tracking-tight">
+                <a href={pathFor(`/time-in-${city.slug}`, lang)} class="hover:text-accent-600">
+                  {city.display_name}
+                </a>
+              </div>
+              <div class="mt-0.5 text-[13px] text-neutral-500 dark:text-neutral-400">
+                {city.country_name}
+              </div>
+            </div>
+            <span class="eyebrow">{label}</span>
+          </div>
+          <div class="display-time text-5xl leading-none sm:text-6xl">
+            {String(fmt.hour).padStart(2, '0')}:{String(fmt.minute).padStart(2, '0')}
+          </div>
+          <div class="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-neutral-500 dark:text-neutral-400">
+            {fmt.weekday} · {fmt.abbr} · {formatOffset(fmt.offsetMin)}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Your time (client-side detection) -->
+  <section class="mx-auto max-w-4xl px-6 pb-12">
+    <YourTime
+      client:load
+      momentIso={moment.toISOString()}
+      sourceLabel={`${sourceTimeStr} in ${a.display_name} is`}
+    />
+  </section>
+
+  <!-- Related -->
+  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
+    <h2 class="eyebrow mb-5">{t('ui.common.related', lang)}</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href={pathFor(`/${a.slug}-to-${b.slug}`, lang)} class="pill">
+        {a.display_name} → {b.display_name} ({t('ui.converter.now', lang)})
+      </a>
+      <a href={pathFor(`/${b.slug}-to-${a.slug}`, lang)} class="pill">
+        {b.display_name} → {a.display_name}
+      </a>
+      <a href={pathFor(`/time-in-${a.slug}`, lang)} class="pill">
+        {t('ui.common.timeIn', lang, { city: a.display_name })}
+      </a>
+      <a href={pathFor(`/time-in-${b.slug}`, lang)} class="pill">
+        {t('ui.common.timeIn', lang, { city: b.display_name })}
+      </a>
+    </div>
+  </section>
+</Layout>

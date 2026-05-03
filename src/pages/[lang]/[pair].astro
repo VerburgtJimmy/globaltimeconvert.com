@@ -1,0 +1,75 @@
+---
+// Single-segment dispatcher under a locale prefix (mirror of /[pair].astro
+// for /es, /pt, /de, /nl, /zh-CN). All DB fetches and 404 handling happen
+// here for the same Astro-component-Response limitation.
+
+import PairPage from '../../components/pages/PairPage.astro';
+import TimeCityPage from '../../components/pages/TimeCityPage.astro';
+import TimePairPage from '../../components/pages/TimePairPage.astro';
+import { getDb, getCityBySlug, type CityWithCountry } from '../../lib/db';
+import { isValidLocale, DEFAULT_LOCALE, pathFor } from '../../lib/i18n';
+import { parsePairSlug } from '../../lib/slugs';
+import {
+  parseTimePrefix,
+  canonicalFormat,
+  formatTimePrefix,
+  type TimeOfDay,
+} from '../../lib/time-slugs';
+
+const lang = Astro.params.lang;
+const slug = Astro.params.pair;
+if (!isValidLocale(lang) || lang === DEFAULT_LOCALE || !slug) {
+  return new Response('Not found', { status: 404 });
+}
+
+const db = getDb();
+
+const tp = parseTimePrefix(slug);
+if (tp && tp.format !== canonicalFormat(lang)) {
+  return Astro.redirect(
+    pathFor(`/${formatTimePrefix(tp.time, lang)}-${tp.rest}`, lang),
+    302,
+  );
+}
+
+let timeCity: CityWithCountry | null = null;
+let timePair: { from: CityWithCountry; to: CityWithCountry } | null = null;
+let pair: { from: CityWithCountry; to: CityWithCountry } | null = null;
+let time: TimeOfDay | null = null;
+
+if (tp) {
+  time = tp.time;
+  const pairSlugs = parsePairSlug(tp.rest);
+  if (pairSlugs) {
+    const [from, to] = await Promise.all([
+      getCityBySlug(db, pairSlugs.from, lang),
+      getCityBySlug(db, pairSlugs.to, lang),
+    ]);
+    if (!from || !to) return new Response('Not found', { status: 404 });
+    timePair = { from, to };
+  } else {
+    const c = await getCityBySlug(db, tp.rest, lang);
+    if (!c) return new Response('Not found', { status: 404 });
+    timeCity = c;
+  }
+} else {
+  const pairSlugs = parsePairSlug(slug);
+  if (!pairSlugs) return new Response('Not found', { status: 404 });
+  const [from, to] = await Promise.all([
+    getCityBySlug(db, pairSlugs.from, lang),
+    getCityBySlug(db, pairSlugs.to, lang),
+  ]);
+  if (!from || !to) return new Response('Not found', { status: 404 });
+  pair = { from, to };
+}
+---
+
+{
+  timePair && time ? (
+    <TimePairPage lang={lang} time={time} from={timePair.from} to={timePair.to} />
+  ) : timeCity && time ? (
+    <TimeCityPage lang={lang} time={time} city={timeCity} />
+  ) : pair ? (
+    <PairPage lang={lang} from={pair.from} to={pair.to} />
+  ) : null
+}

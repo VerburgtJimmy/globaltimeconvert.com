@@ -1,0 +1,11 @@
+---
+import NotFound from '../components/pages/NotFound.astro';
+
+// Intentionally SSR (not prerendered) so middleware.ts can rewrite to it
+// from on-demand routes — Astro forbids rewriting from SSR pages to
+// prerendered ones. The render cost is negligible (no DB, just a static
+// component) and the result is still cacheable via response headers.
+Astro.response.status = 404;
+---
+
+<NotFound />

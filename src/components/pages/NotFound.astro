@@ -1,0 +1,64 @@
+---
+// Shared 404 body. Rendered by:
+//   - /404.astro (Astro's default 404 fallback)
+//   - middleware.ts rewrite when a dispatcher returns plain 404
+//
+// Follows DESIGN strictly: hairline button (no accent fill — that's reserved
+// for the Donate CTA per §3), rounded-md, eyebrow label, plus a row of
+// popular-city pills so the page is useful, not just an apology.
+
+import Layout from '../Layout.astro';
+import { t, type Locale } from '../../lib/i18n';
+
+interface Props {
+  /** Optional — defaults to English. */
+  lang?: Locale;
+}
+const { lang = 'en' } = Astro.props;
+
+const popularCities: Array<{ slug: string; name: string }> = [
+  { slug: 'tokyo', name: 'Tokyo' },
+  { slug: 'london', name: 'London' },
+  { slug: 'new-york', name: 'New York' },
+  { slug: 'sydney', name: 'Sydney' },
+  { slug: 'berlin', name: 'Berlin' },
+  { slug: 'mumbai', name: 'Mumbai' },
+  { slug: 'sao-paulo', name: 'São Paulo' },
+  { slug: 'dubai', name: 'Dubai' },
+];
+---
+
+<Layout
+  title={t('templates.page.notFound.title', lang)}
+  description={t('templates.page.notFound.description', lang)}
+  lang={lang}
+  noindex
+>
+  <section class="mx-auto max-w-2xl px-6 pt-24 pb-24 text-center md:pt-32 md:pb-32">
+    <p class="eyebrow mb-6">404</p>
+    <h1 class="text-[34px] leading-[1.1] font-semibold tracking-tight sm:text-[42px]">
+      {t('templates.page.notFound.h1', lang)}
+    </h1>
+    <p class="mx-auto mt-4 max-w-lg text-[16px] leading-7 text-neutral-600 dark:text-neutral-400">
+      {t('templates.page.notFound.p', lang)}
+    </p>
+
+    <div class="mt-10">
+      <a
+        href="/"
+        class="inline-flex items-center justify-center rounded-md border border-hair px-5 py-2.5 text-[14px] text-neutral-700 transition-colors hover:border-accent-300 hover:text-accent-600 dark:text-neutral-300"
+      >
+        {t('templates.page.notFound.back', lang)}
+      </a>
+    </div>
+
+    <div class="mt-16">
+      <p class="eyebrow mb-4">{t('ui.common.orTryOneOfThese', lang)}</p>
+      <div class="flex flex-wrap justify-center gap-2">
+        {popularCities.map((c) => (
+          <a href={`/time-in-${c.slug}`} class="pill">{c.name}</a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Layout>

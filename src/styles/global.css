@@ -1,0 +1,141 @@
+/* Inter Variable — self-hosted via @fontsource-variable/inter (DESIGN §2). */
+@import "@fontsource-variable/inter/wght.css";
+
+@import "tailwindcss";
+
+/* Class-based dark variant — `<html class="dark">` toggles the entire dark
+ * tree. Falls back to OS preference via the anti-flash script in Layout.astro
+ * head. Lets the Phase 3 ThemeToggle island override the OS choice. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+ * Theme tokens — Stripe-soft × Apple-minimal (DESIGN §0).
+ *   - Inter Variable as primary, system stack as fallback.
+ *   - One accent (modern blue), used sparingly (DESIGN §3).
+ *   - Two muted semantics (success green, warning amber) — STATUS ONLY.
+ * ------------------------------------------------------------------------- */
+@theme {
+  --font-sans:
+    "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Accent — soft modern blue */
+  --color-accent-50:  oklch(0.97 0.02 252);
+  --color-accent-100: oklch(0.93 0.05 252);
+  --color-accent-300: oklch(0.78 0.13 252);
+  --color-accent-500: oklch(0.62 0.19 252);
+  --color-accent-600: oklch(0.55 0.20 252);
+  --color-accent-700: oklch(0.48 0.18 252);
+
+  /* Status semantics — STATUS ONLY (DESIGN §3). */
+  --color-success-50:  oklch(0.96 0.04 158);
+  --color-success-500: oklch(0.66 0.13 158);
+  --color-success-600: oklch(0.58 0.13 158);
+  --color-warning-50:  oklch(0.96 0.04 75);
+  --color-warning-500: oklch(0.78 0.13 75);
+  --color-warning-600: oklch(0.65 0.14 75);
+
+  --tracking-display: -0.022em;
+}
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent-500) 22%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced-motion override (DESIGN §8). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Big-type display utility — used on hero clocks (DESIGN §2). */
+@utility display-time {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-display);
+  font-weight: 600;
+}
+
+/* Tabular numerals for smaller numbers. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+ * Hairline utilities — every container border in the system uses these
+ * (DESIGN §5). Light: faded neutral-200/60. Dark: faded neutral-800/90.
+ * ------------------------------------------------------------------------- */
+.border-hair {
+  border-color: rgb(229 229 229 / 0.6);
+}
+.dark .border-hair {
+  border-color: rgb(38 38 38 / 0.9);
+}
+
+.divide-hair > * + * {
+  border-color: rgb(229 229 229 / 0.6);
+}
+.dark .divide-hair > * + * {
+  border-color: rgb(38 38 38 / 0.9);
+}
+
+/* ---------------------------------------------------------------------------
+ * Pill link (DESIGN §11 component 7).
+ * ------------------------------------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.875rem;
+  font-size: 13px;
+  border: 1px solid rgb(229 229 229 / 0.6);
+  border-radius: 9999px;
+  color: rgb(64 64 64);
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.dark .pill {
+  color: rgb(212 212 212);
+  border-color: rgb(38 38 38 / 0.9);
+}
+.pill:hover {
+  border-color: var(--color-accent-300);
+  color: var(--color-accent-600);
+}
+
+/* ---------------------------------------------------------------------------
+ * Eyebrow label (DESIGN §2).
+ * ------------------------------------------------------------------------- */
+.eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgb(163 163 163);
+}
+.dark .eyebrow {
+  color: rgb(115 115 115);
+}

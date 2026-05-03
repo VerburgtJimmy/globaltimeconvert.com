@@ -1,0 +1,45 @@
+---
+import Layout from '../Layout.astro';
+import { t, pathFor, type Locale } from '../../lib/i18n';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+---
+
+<Layout
+  title={t('templates.page.about.title', lang)}
+  description={t('templates.page.about.description', lang)}
+  lang={lang}
+  breadcrumbs={[
+    { name: t('ui.common.home', lang), url: pathFor('/', lang) },
+    { name: t('ui.nav.about', lang), url: pathFor('/about', lang) },
+  ]}
+>
+  <div class="mx-auto max-w-2xl px-6 pt-10">
+    <nav class="text-[13px] text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
+      <a href={pathFor('/', lang)} class="hover:text-neutral-900 dark:hover:text-neutral-100">
+        {t('ui.common.home', lang)}
+      </a>
+      <span class="mx-2 text-neutral-300 dark:text-neutral-700">/</span>
+      <span>{t('ui.nav.about', lang)}</span>
+    </nav>
+  </div>
+
+  <article class="mx-auto max-w-2xl px-6 pt-12 pb-24">
+    <h1 class="text-[34px] leading-[1.1] font-semibold tracking-tight sm:text-[42px]">
+      {t('templates.page.about.h1', lang)}
+    </h1>
+    <div class="mt-8 space-y-5 text-[16.5px] leading-[1.75] text-neutral-700 dark:text-neutral-300">
+      <p>{t('templates.page.about.p1', lang)}</p>
+      <ul class="space-y-2 pl-1">
+        <li>{t('templates.page.about.li1', lang)}</li>
+        <li>{t('templates.page.about.li2', lang)}</li>
+        <li>{t('templates.page.about.li3', lang)}</li>
+        <li>{t('templates.page.about.li4', lang)}</li>
+        <li>{t('templates.page.about.li5', lang)}</li>
+      </ul>
+    </div>
+  </article>
+</Layout>

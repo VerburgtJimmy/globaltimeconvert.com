@@ -1,0 +1,76 @@
+# PR preview deploys.
+#
+# On every PR open/sync/reopen: typecheck + build, then upload a new Worker
+# version aliased as `pr-<N>`. The preview gets a stable URL like
+# `https://pr-42-globaltimeconvert.<account>.workers.dev`. URL is posted
+# (and updated on subsequent pushes) as a sticky comment on the PR.
+#
+# Notes:
+# - We pass only `github.event.number` into the wrangler command, which is
+#   an integer (safe). PR title / body / branch name are never interpolated
+#   into shell commands or wrangler args — those are attacker-controlled
+#   and have caused workflow-injection vulns in real-world projects.
+# - Previews share the *production* D1 / KV / Analytics Engine. Read-mostly
+#   workload makes that fine; filter on URL in the AE dashboard if a PR
+#   ever needs isolation.
+
+name: Preview deploy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write   # to post the sticky comment
+
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx astro check
+
+      - name: Build
+        run: npx astro build
+
+      - name: Upload preview version
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # `versions upload` ships a new version without making it live;
+          # `--preview-alias pr-<N>` gives it a predictable, reusable URL.
+          # Only the integer PR number is interpolated — never user-controlled
+          # strings like the PR title or branch name.
+          command: versions upload --config dist/server/wrangler.json --preview-alias pr-${{ github.event.number }}
+
+      - name: Post / update sticky preview comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview-deploy
+          message: |
+            ### 🚀 Preview deploy
+
+            **${{ steps.deploy.outputs.deployment-url }}**
+
+            <sub>Updated on every push to this PR. Uses the same D1 + KV + Analytics Engine as production — be mindful of destructive actions.</sub>

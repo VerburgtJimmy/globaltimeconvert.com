@@ -1,0 +1,19 @@
+---
+import DonatePage from '../../components/pages/DonatePage.astro';
+import { isValidLocale, DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '../../lib/i18n';
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return SUPPORTED_LOCALES.filter((l) => l !== DEFAULT_LOCALE).map((lang) => ({
+    params: { lang },
+  }));
+}
+
+const lang = Astro.params.lang;
+if (!isValidLocale(lang) || lang === DEFAULT_LOCALE) {
+  return new Response('Not found', { status: 404 });
+}
+---
+
+<DonatePage lang={lang as Locale} />

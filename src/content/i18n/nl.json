@@ -1,0 +1,138 @@
+{
+  "ui": {
+    "site": {
+      "name": "globaltimeconvert",
+      "tagline": "Snelle, schone tijdzone-conversie.",
+      "description": "De snelste manier om tijd tussen steden te vergelijken. Geen advertenties, geen rommel, geen cookies."
+    },
+    "nav": {
+      "home": "Start",
+      "about": "Over",
+      "donate": "Doneren",
+      "privacy": "Privacy",
+      "terms": "Voorwaarden"
+    },
+    "search": {
+      "placeholder": "Zoek een stad…"
+    },
+    "converter": {
+      "from": "Van",
+      "to": "Naar",
+      "now": "Nu",
+      "swap": "Wisselen"
+    },
+    "footer": {
+      "tagline": "Een schoon, advertentie- en cookievrij tijdzone-hulpmiddel.",
+      "donate": "Trakteer ons op een koffie",
+      "sponsor": "Sponsor op GitHub",
+      "copyright": "© {year} globaltimeconvert.com"
+    },
+    "common": {
+      "allCities": "Alle steden",
+      "popularCities": "Populaire steden",
+      "popularPairs": "Populaire stadsparen",
+      "timeIn": "Tijd in {city}",
+      "viewMore": "Meer bekijken",
+      "observesDst": "Volgt zomertijd",
+      "noDst": "Geen zomertijd",
+      "back": "Terug naar start",
+      "home": "Start",
+      "worldClock": "Wereldklok",
+      "ofCuratedCities": "{n} van {total} geselecteerde steden",
+      "kbdHint": "Druk overal op {key} om te focussen.",
+      "orTryOneOfThese": "Of probeer een van deze",
+      "supportRegion": "Steun",
+      "siteRegion": "Site",
+      "languagesRegion": "Talen",
+      "noCookiesTrackersAds": "Geen cookies, geen trackers, geen advertenties.",
+      "footerTaglineLong": "Een klein, gratis hulpmiddel voor 's werelds tijdzones. Gebouwd en onderhouden door één persoon.",
+      "timezoneDetails": "Tijdzone-details",
+      "ianaTimezone": "IANA-tijdzone",
+      "utcOffset": "UTC-verschil",
+      "abbreviation": "Afkorting",
+      "daylightSaving": "Zomertijd",
+      "population": "Bevolking",
+      "country": "Land",
+      "observed": "Gevolgd",
+      "notObserved": "Niet gevolgd",
+      "millionsSuffix": "miljoen",
+      "thousandsSuffix": "duizend",
+      "compareIntro": "Alle tijden live. Klik op een stad om de converter te openen.",
+      "quickPicksHeading": "Veelvoorkomende kantooruur-conversies",
+      "quickPicksIntro": "Als het deze tijd is in {a}, is het deze tijd in {b}. Dagverschuivingen worden aangegeven.",
+      "related": "Gerelateerd",
+      "pickATime": "Kies een tijd",
+      "resetToNow": "Terug naar nu",
+      "morning": "ochtend",
+      "afternoon": "middag",
+      "evening": "avond",
+      "night": "nacht",
+      "nextDay": "(volgende dag)",
+      "sameTime": "zelfde tijd"
+    }
+  },
+
+  "templates": {
+    "page": {
+      "home": {
+        "title": "globaltimeconvert.com — snelle, schone tijdzone-conversie",
+        "h1": "Hoe laat is het, overal?",
+        "subtitle": "Zoek een willekeurige stad. Vergelijk tijdzones. Plan tussen continenten. Gratis, geen advertenties, geen tracking — nooit.",
+        "popularGrid": { "heading": "Tijd nu in" },
+        "faq": { "heading": "Veelgestelde vragen" }
+      },
+      "cityClock": {
+        "title": "Tijd in {city}, {country} — Huidige lokale tijd",
+        "h1": "Huidige tijd in {city}",
+        "intro": "{city} ligt in tijdzone {tz} ({offset}). De huidige lokale tijd en datum in {city} staan hieronder.",
+        "dstYes": "{city} volgt de zomertijd.",
+        "dstNo": "{city} volgt geen zomertijd.",
+        "compareHeading": "{city}-tijd vergeleken met andere steden",
+        "metaDescription": "Huidige lokale tijd in {city}, {country}. Live klok, tijdzone en zomertijd-info — geen advertenties, geen cookies."
+      },
+      "cityPair": {
+        "title": "{cityA} naar {cityB} — Tijdconverter",
+        "h1": "Tijdverschil {cityA} – {cityB}",
+        "summaryAhead": "{cityA} loopt {phrase} {cityB} op dit moment.",
+        "summaryBehind": "{cityA} loopt {phrase} {cityB} op dit moment.",
+        "summarySame": "{cityA} en {cityB} staan nu in dezelfde tijdzone.",
+        "quickPicks": "Veelvoorkomende kantooruur-conversies",
+        "alsoSee": "Zie ook",
+        "metaDescription": "Converteer tijd tussen {cityA} en {cityB}. {cityA} loopt {phrase} {cityB}. Vergelijk elke tijd, geen advertenties, geen cookies.",
+        "diffAhead": "{n} uur voor op",
+        "diffBehind": "{n} uur achter op",
+        "diffSame": "in dezelfde tijdzone als"
+      },
+      "about": {
+        "title": "Over — globaltimeconvert.com",
+        "description": "Waarom we een schoon, advertentie- en cookievrij tijdzone-hulpmiddel hebben gebouwd.",
+        "h1": "Bewust rustig gebouwd.",
+        "p1": "Wie in 2026 een tijdzone-converter zoekt, komt nog steeds op pagina's vol advertenties, popups en cookiemeldingen. globaltimeconvert is het tegenovergestelde: snel, schoon en rustig betrouwbaar.",
+        "li1": "· Geen advertenties, nooit.",
+        "li2": "· Geen externe trackers.",
+        "li3": "· Geen cookies, geen fingerprinting — en daarom geen cookiemelding.",
+        "li4": "· Open over wat we bewaren (zie privacy).",
+        "li5": "· Volledig gehost op de Cloudflare edge voor snelheid."
+      },
+      "donate": {
+        "title": "Help dit gratis te houden — globaltimeconvert.com",
+        "description": "globaltimeconvert is een hobbyproject. Als het je een paar seconden bespaarde, zo kun je het steunen.",
+        "h1": "Help dit gratis te houden.",
+        "p1": "globaltimeconvert is een zijproject. Eén persoon, geen financiering, geen roadmap-vergaderingen. Het hele ding — de stedendatabase, de IANA-updates, de zes talen, de serverrekening — komt uit eigen zak.",
+        "p2": "Als de site je heeft bespaard van uit-je-hoofd 13-uur-achter-rekenen, of van drie popups op een concurrent, is een kleine eenmalige fooi de schoonste manier om bedankt te zeggen. Geen lidmaatschap, geen voordelen, geen nieuwsbrief. Gewoon een rustiger internet, in de lucht gehouden.",
+        "kofiTitle": "Fooi op Ko-fi",
+        "kofiSub": "Eenmalig, $3 / $5 / $10",
+        "githubTitle": "GitHub Sponsors",
+        "githubSub": "Maandelijks, $1 / $5 / $25 / mnd",
+        "thanks": "Wat sponsors krijgen: een eerlijk bedankje op de Over-pagina (als je dat wilt) en het warme gevoel dat je hebt betaald voor een tool die je echt gebruikt. Er is geen betaalde laag. Die komt er niet."
+      },
+      "notFound": {
+        "title": "Pagina niet gevonden — globaltimeconvert.com",
+        "description": "Die pagina bestaat niet. Probeer de startpagina of zoek een stad.",
+        "h1": "We konden die pagina niet vinden.",
+        "p": "De link kan kapot zijn, of de stad-slug staat nog niet in onze dataset. Probeer te zoeken vanaf de startpagina.",
+        "back": "Terug naar start"
+      }
+    }
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "ui": {
+    "site": {
+      "name": "globaltimeconvert",
+      "tagline": "Fast, clean timezone conversion.",
+      "description": "The fastest way to compare time across cities. No ads, no clutter, no cookies."
+    },
+    "nav": {
+      "home": "Home",
+      "about": "About",
+      "donate": "Donate",
+      "privacy": "Privacy",
+      "terms": "Terms"
+    },
+    "search": {
+      "placeholder": "Search a city…"
+    },
+    "converter": {
+      "from": "From",
+      "to": "To",
+      "now": "Right now",
+      "swap": "Swap"
+    },
+    "footer": {
+      "tagline": "A clean, ad-free, cookie-free timezone tool.",
+      "donate": "Buy us a coffee",
+      "sponsor": "Sponsor on GitHub",
+      "copyright": "© {year} globaltimeconvert.com"
+    },
+    "common": {
+      "allCities": "All cities",
+      "popularCities": "Popular cities",
+      "popularPairs": "Popular pairs",
+      "timeIn": "Time in {city}",
+      "viewMore": "View more",
+      "observesDst": "Observes daylight saving time",
+      "noDst": "No daylight saving time",
+      "back": "Back to home",
+      "home": "Home",
+      "worldClock": "World clock",
+      "ofCuratedCities": "{n} of {total} curated cities",
+      "kbdHint": "Press {key} from anywhere to focus.",
+      "orTryOneOfThese": "Or try one of these",
+      "supportRegion": "Support",
+      "siteRegion": "Site",
+      "languagesRegion": "Languages",
+      "noCookiesTrackersAds": "No cookies, no trackers, no ads.",
+      "footerTaglineLong": "A small, free tool for the world's time zones. Built and maintained by one person.",
+      "timezoneDetails": "Timezone details",
+      "ianaTimezone": "IANA timezone",
+      "utcOffset": "UTC offset",
+      "abbreviation": "Abbreviation",
+      "daylightSaving": "Daylight saving",
+      "population": "Population",
+      "country": "Country",
+      "observed": "Observed",
+      "notObserved": "Not observed",
+      "millionsSuffix": "million",
+      "thousandsSuffix": "thousand",
+      "compareIntro": "All times shown live. Click any city to open its converter.",
+      "quickPicksHeading": "Common business-hour conversions",
+      "quickPicksIntro": "When it's this time in {a}, it's this time in {b}. Day shifts are noted.",
+      "related": "Related",
+      "pickATime": "Pick a time",
+      "resetToNow": "Reset to now",
+      "morning": "morning",
+      "afternoon": "afternoon",
+      "evening": "evening",
+      "night": "night",
+      "nextDay": "(next day)",
+      "sameTime": "same time"
+    }
+  },
+
+  "templates": {
+    "page": {
+      "home": {
+        "title": "globaltimeconvert.com — fast, clean timezone conversion",
+        "h1": "What time is it, anywhere?",
+        "subtitle": "Search any city. Compare timezones. Schedule across continents. Free, no ads, no tracking — ever.",
+        "popularGrid": { "heading": "Time right now in" },
+        "faq": { "heading": "Common questions" }
+      },
+      "cityClock": {
+        "title": "Time in {city}, {country} — Current local time",
+        "h1": "Current time in {city}",
+        "intro": "{city} is in the {tz} timezone ({offset}). The current local time and date in {city} is shown below.",
+        "dstYes": "{city} observes daylight saving time.",
+        "dstNo": "{city} does not observe daylight saving time.",
+        "compareHeading": "{city} time compared to other cities",
+        "metaDescription": "Current local time in {city}, {country}. Live clock, timezone, and DST info — no ads, no cookies."
+      },
+      "cityPair": {
+        "title": "{cityA} to {cityB} Time Converter",
+        "h1": "{cityA} to {cityB} time difference",
+        "summaryAhead": "{cityA} is {phrase} {cityB} right now.",
+        "summaryBehind": "{cityA} is {phrase} {cityB} right now.",
+        "summarySame": "{cityA} and {cityB} are in the same timezone right now.",
+        "quickPicks": "Common business-hour conversions",
+        "alsoSee": "Also see",
+        "metaDescription": "Convert time between {cityA} and {cityB}. {cityA} is {phrase} {cityB}. Compare any time, no ads, no cookies.",
+        "diffAhead": "{n} hours ahead of",
+        "diffBehind": "{n} hours behind",
+        "diffSame": "in the same timezone as"
+      },
+      "about": {
+        "title": "About — globaltimeconvert.com",
+        "description": "Why we built a clean, ad-free, cookie-free timezone tool.",
+        "h1": "Built quiet on purpose.",
+        "p1": "Searching for a timezone converter in 2026 still drops you on pages packed with ads, popups, and cookie banners. globaltimeconvert is the opposite proposition: fast, clean, and quietly authoritative.",
+        "li1": "· No ads, ever.",
+        "li2": "· No third-party trackers.",
+        "li3": "· No cookies, no fingerprinting — and so no cookie banner.",
+        "li4": "· Open about the data we keep (see privacy).",
+        "li5": "· Hosted entirely on Cloudflare's edge for speed."
+      },
+      "donate": {
+        "title": "Help keep this thing free — globaltimeconvert.com",
+        "description": "globaltimeconvert is a side project. If it saved you a few seconds, here's how to support it.",
+        "h1": "Help keep this thing free.",
+        "p1": "globaltimeconvert is a side project. One person, no funding, no roadmap meetings. The whole thing — the city database, the IANA timezone updates, the six locales, the server bill — is covered out of pocket.",
+        "p2": "If the site has saved you from doing 13-hours-behind math in your head, or from clicking through three popups on a competitor's page, a small one-time tip is the cleanest way to say thanks. There's no membership, no perks, no newsletter. Just a quieter internet, kept running.",
+        "kofiTitle": "Tip on Ko-fi",
+        "kofiSub": "One-time, $3 / $5 / $10",
+        "githubTitle": "GitHub Sponsors",
+        "githubSub": "Recurring, $1 / $5 / $25 / mo",
+        "thanks": "What sponsors get: an honest thank-you on the about page (if you want one) and the warm feeling of having paid for a tool you actually use. There is no paid tier. There won't be one."
+      },
+      "notFound": {
+        "title": "Page not found — globaltimeconvert.com",
+        "description": "That page doesn't exist. Try the homepage or search for a city.",
+        "h1": "We couldn't find that page.",
+        "p": "The link may be broken, or the city slug isn't in our dataset yet. Try searching from the homepage.",
+        "back": "Back to home"
+      }
+    }
+  }
+}

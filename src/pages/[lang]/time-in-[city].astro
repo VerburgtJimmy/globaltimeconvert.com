@@ -1,0 +1,16 @@
+---
+import CityClockPage from '../../components/pages/CityClockPage.astro';
+import { getDb, getCityBySlug } from '../../lib/db';
+import { isValidLocale, DEFAULT_LOCALE } from '../../lib/i18n';
+
+const lang = Astro.params.lang;
+const slug = Astro.params.city;
+if (!isValidLocale(lang) || lang === DEFAULT_LOCALE || !slug) {
+  return new Response('Not found', { status: 404 });
+}
+
+const city = await getCityBySlug(getDb(), slug, lang);
+if (!city) return new Response('Not found', { status: 404 });
+---
+
+<CityClockPage lang={lang} city={city} />

@@ -1,0 +1,44 @@
+---
+import Layout from '../components/Layout.astro';
+
+export const prerender = true;
+---
+
+<Layout
+  title="Privacy — globaltimeconvert.com"
+  description="What we collect (almost nothing) and how. Cookieless, GDPR-clean."
+  breadcrumbs={[
+    { name: 'Home', url: '/' },
+    { name: 'Privacy', url: '/privacy' },
+  ]}
+  localesAvailable={['en']}
+>
+  <div class="mx-auto max-w-2xl px-6 pt-10">
+    <nav class="text-[13px] text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
+      <a href="/" class="hover:text-neutral-900 dark:hover:text-neutral-100">Home</a>
+      <span class="mx-2 text-neutral-300 dark:text-neutral-700">/</span>
+      <span>Privacy</span>
+    </nav>
+  </div>
+
+  <article class="mx-auto max-w-2xl px-6 pt-12 pb-24">
+    <h1 class="text-[34px] leading-[1.1] font-semibold tracking-tight sm:text-[42px]">
+      Privacy
+    </h1>
+    <div class="mt-8 space-y-5 text-[16.5px] leading-[1.75] text-neutral-700 dark:text-neutral-300">
+      <p>This site is built to need as little of your data as possible. The short version:</p>
+      <ul class="space-y-2 pl-1">
+        <li>· We set <strong>no cookies</strong>.</li>
+        <li>· No third-party tracking. No Google Analytics, no Facebook pixel, no anything-else pixel.</li>
+        <li>· We do not store your IP address. We hash it with a daily-rotating salt to count unique visitors per day, then forget the salt within a week — making prior-day visitor hashes unrecoverable.</li>
+        <li>· We record the page you visit, the referrer domain (if any), the language we served you, and your country (from Cloudflare's edge geolocation).</li>
+        <li>· No fingerprinting: no canvas, no font, no User-Agent profiling.</li>
+      </ul>
+      <p>
+        Because we collect no personal data and set no cookies, this site does not need a
+        cookie banner under GDPR or ePrivacy. If that ever changes, we'll update this page
+        first.
+      </p>
+    </div>
+  </article>
+</Layout>

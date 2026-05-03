@@ -1,0 +1,194 @@
+---
+// Specific-time city page: /9am-miami, /14-30-tokyo, etc.
+//
+// Visually a sibling of CityClockPage (/time-in-X) — same hero structure,
+// same metadata grid, same comparison-rows section. The only thing that
+// differs: this page locks the displayed time to a specific moment instead
+// of ticking live.
+
+import Layout from '../Layout.astro';
+import YourTime from '../islands/YourTime.svelte';
+import { getDb, getCitiesAcrossZones, type CityWithCountry } from '../../lib/db';
+import {
+  formatInZone,
+  momentForWallTime,
+  formatOffset,
+  observesDst,
+} from '../../lib/tz';
+import { displayTime, type TimeOfDay } from '../../lib/time-slugs';
+import { t, pathFor, type Locale } from '../../lib/i18n';
+
+interface Props {
+  lang: Locale;
+  time: TimeOfDay;
+  city: CityWithCountry;
+}
+
+const { lang, time, city } = Astro.props;
+const db = getDb();
+
+// The UTC moment representing `time` wall-clock in the city's zone today.
+const moment = momentForWallTime(time, city.timezone_id);
+const sourceFmt = formatInZone(moment, city.timezone_id);
+const sourceTimeStr = displayTime(time, lang);
+const offset = formatOffset(sourceFmt.offsetMin);
+const dst = observesDst(city.timezone_id);
+
+// Locale-aware full date for the line under the hero clock.
+const fullDate = new Intl.DateTimeFormat(localeForIntl(lang), {
+  timeZone: city.timezone_id,
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+}).format(moment);
+
+function localeForIntl(l: Locale): string {
+  // Map our short codes to BCP-47 tags Intl prefers.
+  return l === 'zh-CN' ? 'zh-CN' : l;
+}
+
+// Comparison rows: same UTC moment formatted in 12 popular non-source zones.
+const others = await getCitiesAcrossZones(db, city.id, 12, lang);
+const compareRows = others.map((other) => {
+  const f = formatInZone(moment, other.timezone_id);
+  const dayShift = f.weekday !== sourceFmt.weekday;
+  return { other, f, dayShift };
+});
+
+const populationFormatted = (() => {
+  const p = city.population;
+  if (p >= 1_000_000)
+    return `${(p / 1_000_000).toFixed(2)} ${t('ui.common.millionsSuffix', lang)}`;
+  if (p >= 1_000)
+    return `${(p / 1_000).toFixed(0)} ${t('ui.common.thousandsSuffix', lang)}`;
+  return p.toLocaleString('en-US');
+})();
+
+const title = `${sourceTimeStr} in ${city.display_name} — ${t('ui.site.name', lang)}`;
+const description = `When it's ${sourceTimeStr} in ${city.display_name}, ${city.country_name}, see what time it is in your timezone and 12 popular cities. No ads, no cookies.`;
+
+const breadcrumbs = [
+  { name: t('ui.common.home', lang), url: pathFor('/', lang) },
+  {
+    name: `${sourceTimeStr} ${city.display_name}`,
+    url: Astro.url.pathname,
+  },
+];
+---
+
+<Layout
+  title={title}
+  description={description}
+  lang={lang}
+  breadcrumbs={breadcrumbs}
+>
+  <!-- Breadcrumb -->
+  <div class="mx-auto max-w-4xl px-6 pt-10">
+    <nav class="text-[13px] text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
+      <a href={pathFor('/', lang)} class="hover:text-neutral-900 dark:hover:text-neutral-100">
+        {t('ui.common.home', lang)}
+      </a>
+      <span class="mx-2 text-neutral-300 dark:text-neutral-700">/</span>
+      <span>{sourceTimeStr} {city.display_name}</span>
+    </nav>
+  </div>
+
+  <!-- Hero clock — matches CityClockPage's structure (smaller h1, big static time, full date) -->
+  <section class="mx-auto max-w-4xl px-6 pt-10 pb-20 md:pb-24">
+    <h1 class="text-[26px] font-semibold tracking-tight sm:text-3xl">
+      {sourceTimeStr} in {city.display_name}
+    </h1>
+    <div class="mt-10">
+      <div class="display-time text-[64px] leading-none sm:text-7xl md:text-8xl">
+        {String(sourceFmt.hour).padStart(2, '0')}:{String(sourceFmt.minute).padStart(2, '0')}
+      </div>
+      <div class="mt-5 text-[16px] text-neutral-600 sm:text-[17px] dark:text-neutral-400">
+        {fullDate}
+      </div>
+    </div>
+  </section>
+
+  <!-- Your time -->
+  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
+    <YourTime
+      client:load
+      momentIso={moment.toISOString()}
+      sourceLabel={`${sourceTimeStr} in ${city.display_name} is`}
+    />
+  </section>
+
+  <!-- Timezone details — same grid as CityClockPage -->
+  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
+    <h2 class="eyebrow mb-6">{t('ui.common.timezoneDetails', lang)}</h2>
+    <dl class="grid grid-cols-2 gap-x-8 gap-y-7 md:grid-cols-3">
+      <div>
+        <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.ianaTimezone', lang)}</dt>
+        <dd class="font-mono text-[14px]">{city.timezone_id}</dd>
+      </div>
+      <div>
+        <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.utcOffset', lang)}</dt>
+        <dd class="font-mono text-[14px]">{offset}</dd>
+      </div>
+      <div>
+        <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.abbreviation', lang)}</dt>
+        <dd class="font-mono text-[14px]">{sourceFmt.abbr}</dd>
+      </div>
+      <div>
+        <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.daylightSaving', lang)}</dt>
+        <dd class="text-[14px]">{dst ? t('ui.common.observed', lang) : t('ui.common.notObserved', lang)}</dd>
+      </div>
+      <div>
+        <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.population', lang)}</dt>
+        <dd class="tnum text-[14px]">{populationFormatted}</dd>
+      </div>
+      <div>
+        <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.country', lang)}</dt>
+        <dd class="text-[14px]">{city.country_name}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <!-- Comparison rows — same component pattern as CityClockPage (DESIGN §11) -->
+  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-14">
+    <h2 class="text-[20px] font-semibold tracking-tight sm:text-[22px]">
+      {sourceTimeStr} {city.display_name} — {t('ui.common.popularCities', lang)}
+    </h2>
+    <p class="mt-2 mb-8 text-[14px] text-neutral-500 dark:text-neutral-400">
+      {t('ui.common.compareIntro', lang)}
+    </p>
+    <div class="border-t border-hair">
+      {compareRows.map(({ other, f, dayShift }) => (
+        <a
+          href={pathFor(`/${city.slug}-to-${other.slug}`, lang)}
+          class="grid grid-cols-[1fr_auto] items-baseline border-b border-hair px-1 py-5 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900/60"
+        >
+          <div>
+            <div class="font-medium">{other.display_name}</div>
+            <div class="text-[12.5px] text-neutral-500 dark:text-neutral-400">{other.country_name}</div>
+          </div>
+          <div class="text-right">
+            <div class="display-time text-[18px]">
+              {String(f.hour).padStart(2, '0')}:{String(f.minute).padStart(2, '0')}
+            </div>
+            <div class="mt-0.5 text-[12px] text-neutral-500 dark:text-neutral-400">
+              <span class={dayShift ? 'text-accent-600' : ''}>
+                {f.weekday.slice(0, 3)}{dayShift ? ' ' + t('ui.common.nextDay', lang) : ''}
+              </span> · {f.abbr}
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Related -->
+  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
+    <h2 class="eyebrow mb-5">{t('ui.common.related', lang)}</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href={pathFor(`/time-in-${city.slug}`, lang)} class="pill">
+        {t('ui.common.timeIn', lang, { city: city.display_name })}
+      </a>
+    </div>
+  </section>
+</Layout>

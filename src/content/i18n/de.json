@@ -1,0 +1,138 @@
+{
+  "ui": {
+    "site": {
+      "name": "globaltimeconvert",
+      "tagline": "Schnelle, klare Zeitzonen-Umrechnung.",
+      "description": "Der schnellste Weg, Zeit zwischen Städten zu vergleichen. Keine Anzeigen, kein Durcheinander, keine Cookies."
+    },
+    "nav": {
+      "home": "Start",
+      "about": "Über",
+      "donate": "Spenden",
+      "privacy": "Datenschutz",
+      "terms": "Nutzungsbedingungen"
+    },
+    "search": {
+      "placeholder": "Stadt suchen…"
+    },
+    "converter": {
+      "from": "Von",
+      "to": "Nach",
+      "now": "Jetzt gerade",
+      "swap": "Tauschen"
+    },
+    "footer": {
+      "tagline": "Ein sauberes, werbe- und cookiefreies Zeitzonen-Tool.",
+      "donate": "Kauf uns einen Kaffee",
+      "sponsor": "Auf GitHub sponsern",
+      "copyright": "© {year} globaltimeconvert.com"
+    },
+    "common": {
+      "allCities": "Alle Städte",
+      "popularCities": "Beliebte Städte",
+      "popularPairs": "Beliebte Städtepaare",
+      "timeIn": "Uhrzeit in {city}",
+      "viewMore": "Mehr anzeigen",
+      "observesDst": "Beachtet Sommerzeit",
+      "noDst": "Keine Sommerzeit",
+      "back": "Zurück zur Startseite",
+      "home": "Start",
+      "worldClock": "Weltuhr",
+      "ofCuratedCities": "{n} von {total} ausgewählten Städten",
+      "kbdHint": "Drücke {key} überall, um zu fokussieren.",
+      "orTryOneOfThese": "Oder probier eine von diesen",
+      "supportRegion": "Support",
+      "siteRegion": "Seite",
+      "languagesRegion": "Sprachen",
+      "noCookiesTrackersAds": "Keine Cookies, keine Tracker, keine Werbung.",
+      "footerTaglineLong": "Ein kleines, kostenloses Tool für die Zeitzonen der Welt. Von einer einzelnen Person gebaut und gepflegt.",
+      "timezoneDetails": "Zeitzonen-Details",
+      "ianaTimezone": "IANA-Zeitzone",
+      "utcOffset": "UTC-Versatz",
+      "abbreviation": "Abkürzung",
+      "daylightSaving": "Sommerzeit",
+      "population": "Einwohnerzahl",
+      "country": "Land",
+      "observed": "Beachtet",
+      "notObserved": "Nicht beachtet",
+      "millionsSuffix": "Millionen",
+      "thousandsSuffix": "Tausend",
+      "compareIntro": "Alle Zeiten live. Klicke eine Stadt, um deren Konverter zu öffnen.",
+      "quickPicksHeading": "Übliche Geschäftszeiten-Umrechnungen",
+      "quickPicksIntro": "Wenn es diese Uhrzeit in {a} ist, ist es diese Uhrzeit in {b}. Tagesverschiebungen sind markiert.",
+      "related": "Verwandt",
+      "pickATime": "Zeit wählen",
+      "resetToNow": "Auf jetzt zurücksetzen",
+      "morning": "Vormittag",
+      "afternoon": "Nachmittag",
+      "evening": "Abend",
+      "night": "Nacht",
+      "nextDay": "(nächster Tag)",
+      "sameTime": "gleiche Zeit"
+    }
+  },
+
+  "templates": {
+    "page": {
+      "home": {
+        "title": "globaltimeconvert.com — schnelle, klare Zeitzonen-Umrechnung",
+        "h1": "Wie spät ist es, überall?",
+        "subtitle": "Such eine beliebige Stadt. Vergleiche Zeitzonen. Plane über Kontinente hinweg. Kostenlos, ohne Werbung, ohne Tracking — nie.",
+        "popularGrid": { "heading": "Aktuelle Uhrzeit in" },
+        "faq": { "heading": "Häufige Fragen" }
+      },
+      "cityClock": {
+        "title": "Uhrzeit in {city}, {country} — Aktuelle Ortszeit",
+        "h1": "Aktuelle Uhrzeit in {city}",
+        "intro": "{city} liegt in der Zeitzone {tz} ({offset}). Die aktuelle Ortszeit und das Datum in {city} stehen unten.",
+        "dstYes": "{city} beachtet die Sommerzeit.",
+        "dstNo": "{city} beachtet keine Sommerzeit.",
+        "compareHeading": "{city}-Zeit verglichen mit anderen Städten",
+        "metaDescription": "Aktuelle Ortszeit in {city}, {country}. Live-Uhr, Zeitzone und Sommerzeit-Info — keine Werbung, keine Cookies."
+      },
+      "cityPair": {
+        "title": "{cityA} nach {cityB} — Zeitumrechner",
+        "h1": "Zeitunterschied {cityA} – {cityB}",
+        "summaryAhead": "{cityA} ist {phrase} {cityB} gerade.",
+        "summaryBehind": "{cityA} ist {phrase} {cityB} gerade.",
+        "summarySame": "{cityA} und {cityB} sind gerade in derselben Zeitzone.",
+        "quickPicks": "Übliche Geschäftszeiten-Umrechnungen",
+        "alsoSee": "Siehe auch",
+        "metaDescription": "Zeit zwischen {cityA} und {cityB} umrechnen. {cityA} ist {phrase} {cityB}. Vergleiche jede Uhrzeit, ohne Werbung, ohne Cookies.",
+        "diffAhead": "{n} Stunden vor",
+        "diffBehind": "{n} Stunden hinter",
+        "diffSame": "in derselben Zeitzone wie"
+      },
+      "about": {
+        "title": "Über — globaltimeconvert.com",
+        "description": "Warum wir ein sauberes, werbe- und cookiefreies Zeitzonen-Tool gebaut haben.",
+        "h1": "Bewusst leise gebaut.",
+        "p1": "Wer 2026 nach einem Zeitzonen-Konverter sucht, landet immer noch auf Seiten voller Werbung, Popups und Cookie-Bannern. globaltimeconvert ist das Gegenteil: schnell, sauber und unaufgeregt verlässlich.",
+        "li1": "· Keine Werbung, nie.",
+        "li2": "· Keine Drittanbieter-Tracker.",
+        "li3": "· Keine Cookies, kein Fingerprinting — und deshalb auch kein Cookie-Banner.",
+        "li4": "· Offen über die Daten, die wir behalten (siehe Datenschutz).",
+        "li5": "· Komplett auf dem Cloudflare-Edge gehostet für Geschwindigkeit."
+      },
+      "donate": {
+        "title": "Hilf, das Tool kostenlos zu halten — globaltimeconvert.com",
+        "description": "globaltimeconvert ist ein Hobbyprojekt. Wenn es dir Sekunden erspart hat, hier ist, wie du es unterstützen kannst.",
+        "h1": "Hilf, das hier kostenlos zu halten.",
+        "p1": "globaltimeconvert ist ein Nebenprojekt. Eine Person, keine Finanzierung, keine Roadmap-Meetings. Das ganze Ding — die Städte-Datenbank, die IANA-Updates, die sechs Sprachen, die Server-Rechnung — kommt aus eigener Tasche.",
+        "p2": "Wenn die Seite dir 13-Stunden-zurück-Kopfrechnen erspart hat oder das Wegklicken von drei Popups bei einem Konkurrenten, ist ein kleiner einmaliger Tipp die sauberste Art, danke zu sagen. Keine Mitgliedschaft, keine Vorteile, kein Newsletter. Nur ein leiseres Internet, am Laufen gehalten.",
+        "kofiTitle": "Trinkgeld auf Ko-fi",
+        "kofiSub": "Einmalig, $3 / $5 / $10",
+        "githubTitle": "GitHub Sponsors",
+        "githubSub": "Wiederkehrend, $1 / $5 / $25 / Monat",
+        "thanks": "Was Sponsoren bekommen: ein ehrliches Dankeschön auf der Über-Seite (falls gewünscht) und das warme Gefühl, für ein Tool gezahlt zu haben, das man wirklich benutzt. Es gibt keine Bezahlstufe. Es wird keine geben."
+      },
+      "notFound": {
+        "title": "Seite nicht gefunden — globaltimeconvert.com",
+        "description": "Diese Seite existiert nicht. Versuche die Startseite oder suche eine Stadt.",
+        "h1": "Diese Seite konnten wir nicht finden.",
+        "p": "Der Link ist vielleicht defekt, oder der Stadt-Slug ist noch nicht in unseren Daten. Versuch's über die Startseite.",
+        "back": "Zurück zur Startseite"
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+---
+// Shared homepage body. Used by both /index.astro (lang='en') and
+// /[lang]/index.astro (other locales). All copy via t(), all internal
+// links via pathFor(), city names via display_name.
+
+import Layout from '../Layout.astro';
+import CitySearch from '../islands/CitySearch.svelte';
+import { getDb, getTopCities } from '../../lib/db';
+import { t, pathFor, type Locale } from '../../lib/i18n';
+
+interface Props {
+  lang: Locale;
+}
+const { lang } = Astro.props;
+
+const db = getDb();
+const featured = await getTopCities(db, 12, lang);
+
+// Hand-curated popular pairs use the English city slugs (our URL space).
+const popularPairs: Array<[string, string]> = [
+  ['new-york', 'london'],
+  ['san-francisco', 'tokyo'],
+  ['london', 'singapore'],
+  ['berlin', 'new-york'],
+  ['sydney', 'los-angeles'],
+  ['sao-paulo', 'lisbon'],
+  ['dubai', 'mumbai'],
+  ['paris', 'sao-paulo'],
+];
+
+function pairLabel(a: string, b: string): string {
+  const fmt = (s: string) =>
+    s.split('-').map((w) => w[0]!.toUpperCase() + w.slice(1)).join(' ');
+  return `${fmt(a)} → ${fmt(b)}`;
+}
+---
+
+<Layout
+  title={t('templates.page.home.title', lang)}
+  description={t('ui.site.description', lang)}
+  lang={lang}
+>
+  <!-- Hero -->
+  <section class="mx-auto max-w-4xl px-6 pt-24 pb-20 text-center md:pt-32 md:pb-24">
+    <h1 class="text-[40px] leading-[1.05] font-semibold tracking-tight sm:text-5xl md:text-6xl">
+      {t('templates.page.home.h1', lang)}
+    </h1>
+    <p class="mx-auto mt-6 max-w-xl text-[16px] leading-7 text-neutral-600 sm:text-[17px] dark:text-neutral-400">
+      {t('templates.page.home.subtitle', lang)}
+    </p>
+
+    <div class="mx-auto mt-10 max-w-xl text-left">
+      <CitySearch client:load />
+      <div class="mt-3 text-center text-[12px] text-neutral-400 dark:text-neutral-500">
+        {t('ui.common.kbdHint', lang, { key: '/' }).split('/')[0]}
+        <kbd class="rounded border border-hair px-1.5 py-0.5 font-mono">/</kbd>
+        {t('ui.common.kbdHint', lang, { key: '/' }).split('/').slice(1).join('/').replace(/^[\s.]*/, ' ')}
+      </div>
+    </div>
+  </section>
+
+  <!-- World clock grid -->
+  <section class="mx-auto max-w-6xl px-6 py-14">
+    <div class="mb-8 flex items-baseline justify-between">
+      <h2 class="eyebrow">{t('ui.common.worldClock', lang)}</h2>
+      <span class="text-[13px] text-neutral-500 dark:text-neutral-400">
+        {t('ui.common.ofCuratedCities', lang, { n: featured.length, total: 224 })}
+      </span>
+    </div>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {featured.map((c) => (
+        <a
+          href={pathFor(`/time-in-${c.slug}`, lang)}
+          class="block rounded-xl border border-hair p-5 transition-colors hover:border-accent-300"
+        >
+          <div class="flex items-baseline justify-between">
+            <span class="font-medium tracking-tight">{c.display_name}</span>
+            <span class="text-[12px] text-neutral-500 dark:text-neutral-400">{c.country_name}</span>
+          </div>
+          <div
+            class="display-time mt-3 text-3xl"
+            data-clock={c.timezone_id}
+            data-format="HH:mm:ss"
+          >
+            --:--:--
+          </div>
+          <div
+            class="mt-2 text-[12px] text-neutral-500 dark:text-neutral-400"
+            data-clock={c.timezone_id}
+            data-format="weekday-tz"
+          >
+            —
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Popular pairs -->
+  <section class="mx-auto max-w-6xl px-6 py-14">
+    <h2 class="eyebrow mb-6">{t('ui.common.popularPairs', lang)}</h2>
+    <div class="flex flex-wrap gap-2">
+      {popularPairs.map(([a, b]) => (
+        <a href={pathFor(`/${a}-to-${b}`, lang)} class="pill">
+          {pairLabel(a, b)}
+        </a>
+      ))}
+    </div>
+  </section>
+</Layout>

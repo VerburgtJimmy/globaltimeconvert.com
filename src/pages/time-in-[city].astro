@@ -1,0 +1,12 @@
+---
+import CityClockPage from '../components/pages/CityClockPage.astro';
+import { getDb, getCityBySlug } from '../lib/db';
+
+const slug = Astro.params.city;
+if (!slug) return new Response('Not found', { status: 404 });
+
+const city = await getCityBySlug(getDb(), slug, 'en');
+if (!city) return new Response('Not found', { status: 404 });
+---
+
+<CityClockPage lang="en" city={city} />

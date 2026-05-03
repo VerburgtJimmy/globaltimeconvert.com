@@ -1,0 +1,229 @@
+---
+import '../styles/global.css';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import Meta from './seo/Meta.astro';
+import type { BreadcrumbItem } from '../lib/seo';
+import type { Locale } from '../lib/i18n';
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string | URL;
+  lang?: Locale;
+  noindex?: boolean;
+  /** Hide the global header — used for layouts that own their own chrome (none in v1). */
+  noHeader?: boolean;
+  /** Hide the global footer — same caveat. */
+  noFooter?: boolean;
+  /** Breadcrumb trail — emitted as BreadcrumbList JSON-LD by Meta.astro. */
+  breadcrumbs?: BreadcrumbItem[];
+  /** Extra JSON-LD schemas (FAQPage, Event, etc.). */
+  extraStructuredData?: Array<Record<string, unknown>>;
+  /** Locales this URL exists in. Defaults to all 6. */
+  localesAvailable?: readonly Locale[];
+}
+
+const {
+  title,
+  description,
+  canonical = Astro.url,
+  lang = 'en',
+  noindex = false,
+  noHeader = false,
+  noFooter = false,
+  breadcrumbs,
+  extraStructuredData,
+  localesAvailable,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang} class="h-full">
+  <head>
+    {/*
+      Anti-flash theme resolver — runs before stylesheets paint so the
+      correct light/dark class is on <html> from the first frame. Reads
+      a stored override from localStorage if the user has clicked the
+      theme toggle, otherwise falls back to the OS preference. The
+      Phase 3 ThemeToggle island keeps localStorage in sync.
+    */}
+    <script is:inline>
+      (() => {
+        try {
+          const stored = localStorage.getItem('theme');
+          const dark =
+            stored === 'dark' ||
+            (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch {}
+      })();
+    </script>
+    <Meta
+      title={title}
+      description={description}
+      canonical={canonical}
+      noindex={noindex}
+      lang={lang}
+      breadcrumbs={breadcrumbs}
+      extraStructuredData={extraStructuredData}
+      localesAvailable={localesAvailable}
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body
+    class="flex h-full min-h-screen flex-col bg-white font-sans text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100"
+  >
+    {!noHeader && <Header lang={lang} />}
+    <main class="flex-1">
+      <slot />
+    </main>
+    {!noFooter && <Footer lang={lang} />}
+
+    {/*
+      Pageview beacon (PLAN §7). Fires once per page load. Uses
+      `navigator.sendBeacon` when available so the request survives even if
+      the user navigates away immediately. Privacy posture: we send only the
+      path, language, referrer domain (never the full URL), and UTM params.
+      The server adds country (region-anonymised) and a daily-salted hash of
+      the IP — the IP itself is never persisted.
+    */}
+    <script is:inline>
+      (() => {
+        try {
+          const url = new URL(location.href);
+          const refRaw = document.referrer;
+          let ref = '';
+          try {
+            if (refRaw && new URL(refRaw).origin !== location.origin) {
+              ref = new URL(refRaw).hostname;
+            }
+          } catch {}
+          const utm = {
+            s: url.searchParams.get('utm_source') || undefined,
+            m: url.searchParams.get('utm_medium') || undefined,
+            c: url.searchParams.get('utm_campaign') || undefined,
+          };
+          const body = JSON.stringify({
+            path: url.pathname,
+            lang: document.documentElement.lang || 'en',
+            ref: ref || undefined,
+            utm: utm.s || utm.m || utm.c ? utm : undefined,
+          });
+          const headers = { type: 'application/json' };
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/beacon', new Blob([body], headers));
+          } else {
+            fetch('/api/beacon', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body,
+              keepalive: true,
+            }).catch(() => {});
+          }
+        } catch {
+          /* analytics must never break the page */
+        }
+      })();
+    </script>
+
+    {/*
+      Live-clock updater. One shared rAF-aligned loop drives every <time>/<span>
+      element with `data-clock` set to an IANA zone. The Phase 3 Svelte islands
+      will replace this with a more granular store, but for SSR pages the
+      vanilla version keeps bundle size at zero.
+
+      Format keys (set via data-format):
+        HH:mm:ss          → "14:23:47"        (24h, en-GB)
+        HH:mm             → "14:23"
+        weekday-date      → "Sunday, May 3, 2026"
+        weekday-tz        → "Sun · JST"       (compact)
+        weekday-tz-offset → "Sunday · EDT · UTC-04:00"
+    */}
+    <script is:inline>
+      (() => {
+        const tzAbbr = (tz, d) => {
+          try {
+            const parts = new Intl.DateTimeFormat('en-US', {
+              timeZone: tz,
+              timeZoneName: 'short',
+            }).formatToParts(d);
+            return parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+          } catch {
+            return '';
+          }
+        };
+        const fmtTime = (tz, withSec) => {
+          const opts = {
+            timeZone: tz,
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+          };
+          if (withSec) opts.second = '2-digit';
+          return new Intl.DateTimeFormat('en-GB', opts).format(new Date());
+        };
+        const fmtWeekdayDate = (tz) =>
+          new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          }).format(new Date());
+        const fmtWeekdayTz = (tz) => {
+          const d = new Date();
+          const wd = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            weekday: 'short',
+          }).format(d);
+          const ab = tzAbbr(tz, d);
+          return ab ? wd + ' · ' + ab : wd;
+        };
+        const fmtWeekdayTzOffset = (tz) => {
+          const d = new Date();
+          const wd = new Intl.DateTimeFormat('en-US', {
+            timeZone: tz,
+            weekday: 'long',
+          }).format(d);
+          const ab = tzAbbr(tz, d);
+          let off = '';
+          try {
+            const parts = new Intl.DateTimeFormat('en-US', {
+              timeZone: tz,
+              timeZoneName: 'longOffset',
+            }).formatToParts(d);
+            off = (parts.find((p) => p.type === 'timeZoneName')?.value ?? '').replace('GMT', 'UTC');
+          } catch {}
+          return [wd, ab, off].filter(Boolean).join(' · ');
+        };
+
+        const tick = () => {
+          const els = document.querySelectorAll('[data-clock]');
+          for (const el of els) {
+            const tz = el.getAttribute('data-clock');
+            const fmt = el.getAttribute('data-format') || 'HH:mm:ss';
+            if (!tz) continue;
+            try {
+              if (fmt === 'HH:mm:ss') el.textContent = fmtTime(tz, true);
+              else if (fmt === 'HH:mm') el.textContent = fmtTime(tz, false);
+              else if (fmt === 'weekday-date') el.textContent = fmtWeekdayDate(tz);
+              else if (fmt === 'weekday-tz') el.textContent = fmtWeekdayTz(tz);
+              else if (fmt === 'weekday-tz-offset') el.textContent = fmtWeekdayTzOffset(tz);
+            } catch {
+              /* keep SSR fallback */
+            }
+          }
+        };
+
+        tick();
+        // Align to next full second, then run every 1s.
+        const ms = 1000 - (Date.now() % 1000);
+        setTimeout(() => {
+          tick();
+          setInterval(tick, 1000);
+        }, ms);
+      })();
+    </script>
+  </body>
+</html>
