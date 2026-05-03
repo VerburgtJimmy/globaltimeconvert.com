@@ -31,7 +31,12 @@ export interface AeResult {
 
 interface AeApiResponse {
   meta: Array<{ name: string; type: string }>;
-  data: unknown[][];
+  /**
+   * Workers Analytics Engine returns each row as an object keyed by
+   * column name (`{path: "...", pageviews: 42}`). Older / docs-described
+   * variants return arrays-of-arrays; we handle both defensively below.
+   */
+  data: Array<Record<string, unknown> | unknown[]>;
   rows: number;
 }
 
@@ -74,12 +79,20 @@ export async function aeQuery(sql: string, cacheKey?: string): Promise<AeResult>
   }
 
   const data = (await r.json()) as AeApiResponse;
-  const rows: AeRow[] = data.data.map((row) => {
-    const obj: AeRow = {};
-    data.meta.forEach((col, i) => {
-      obj[col.name] = row[i] as string | number;
-    });
-    return obj;
+  const rawRows = data.data ?? [];
+  const meta = data.meta ?? [];
+  const rows: AeRow[] = rawRows.map((row) => {
+    // AE typically returns each row as an object keyed by column name.
+    // Some legacy / docs-described responses return array-of-arrays — zip
+    // with the meta column names if so.
+    if (Array.isArray(row)) {
+      const obj: AeRow = {};
+      meta.forEach((col, i) => {
+        obj[col.name] = row[i] as string | number;
+      });
+      return obj;
+    }
+    return row as AeRow;
   });
 
   const result: Omit<AeResult, 'cached'> = { rows, total: data.rows };
