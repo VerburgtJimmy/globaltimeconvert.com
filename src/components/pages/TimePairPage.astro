@@ -8,7 +8,7 @@
 import Layout from '../Layout.astro';
 import YourTime from '../islands/YourTime.svelte';
 import type { CityWithCountry } from '../../lib/db';
-import { formatInZone, momentForWallTime, formatOffset } from '../../lib/tz';
+import { formatInZone, momentForWallTime, formatOffset, formatHmForLang } from '../../lib/tz';
 import { displayTime, type TimeOfDay } from '../../lib/time-slugs';
 import { t, pathFor, type Locale } from '../../lib/i18n';
 
@@ -89,7 +89,7 @@ const breadcrumbs = [
             <span class="eyebrow">{label}</span>
           </div>
           <div class="display-time text-5xl leading-none sm:text-6xl">
-            {String(fmt.hour).padStart(2, '0')}:{String(fmt.minute).padStart(2, '0')}
+            {formatHmForLang(fmt, lang)}
           </div>
           <div class="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-neutral-500 dark:text-neutral-400">
             {fmt.weekday} · {fmt.abbr} · {formatOffset(fmt.offsetMin)}
@@ -103,6 +103,7 @@ const breadcrumbs = [
   <section class="mx-auto max-w-4xl px-6 pb-12">
     <YourTime
       client:load
+      lang={lang}
       momentIso={moment.toISOString()}
       sourceLabel={`${sourceTimeStr} in ${a.display_name} is`}
     />

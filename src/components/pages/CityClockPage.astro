@@ -13,6 +13,8 @@ import {
   observesDst,
   diffMin,
   describeDiff,
+  formatHmsForLang,
+  formatHmForLang,
 } from '../../lib/tz';
 import { t, pathFor, diffPhrase, type Locale } from '../../lib/i18n';
 
@@ -95,7 +97,7 @@ const breadcrumbs = [
         data-clock={city.timezone_id}
         data-format="HH:mm:ss"
       >
-        {String(time.hour).padStart(2, '0')}:{String(time.minute).padStart(2, '0')}:{String(time.second).padStart(2, '0')}
+        {formatHmsForLang(time, lang)}
       </div>
       <div
         class="mt-5 text-[16px] text-neutral-600 sm:text-[17px] dark:text-neutral-400"
@@ -111,6 +113,7 @@ const breadcrumbs = [
   <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
     <YourTime
       client:load
+      lang={lang}
       momentIso={now.toISOString()}
       sourceLabel={`${t('ui.converter.now', lang)} in ${city.display_name}`}
     />

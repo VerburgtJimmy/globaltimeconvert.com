@@ -16,9 +16,14 @@
      * inline so the line reads "9 AM in Miami is X:XX in your timezone".
      */
     sourceLabel?: string;
+    /**
+     * Page locale — drives 12h vs 24h display. English uses AM/PM; every
+     * other supported locale uses 24h. Defaults to 'en' for safety.
+     */
+    lang?: string;
   }
 
-  let { momentIso, sourceLabel }: Props = $props();
+  let { momentIso, sourceLabel, lang = 'en' }: Props = $props();
 
   let userTz = $state<string | null>(null);
   let displayTime = $state('');
@@ -35,11 +40,12 @@
     const at = new Date(momentIso);
     if (Number.isNaN(at.getTime())) return;
 
-    const fmtTime = new Intl.DateTimeFormat('en-GB', {
+    const ampm = lang === 'en';
+    const fmtTime = new Intl.DateTimeFormat(ampm ? 'en-US' : 'en-GB', {
       timeZone: userTz,
-      hour: '2-digit',
+      hour: ampm ? 'numeric' : '2-digit',
       minute: '2-digit',
-      hour12: false,
+      hour12: ampm,
     });
     const fmtDate = new Intl.DateTimeFormat('en-US', {
       timeZone: userTz,
