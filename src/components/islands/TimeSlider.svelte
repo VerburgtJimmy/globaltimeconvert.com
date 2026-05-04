@@ -16,9 +16,24 @@
     toCity: string;
     /** Wall-clock minute in fromTz (0–1410, must be a multiple of 30). */
     initialAnchorMin: number;
+    /**
+     * Page locale — drives the 12h vs 24h readout style. English uses
+     * AM/PM ("2:30 PM"); every other locale uses 24h ("14:30").
+     */
+    lang?: string;
   }
 
-  let { fromTz, toTz, fromCity, toCity, initialAnchorMin }: Props = $props();
+  let { fromTz, toTz, fromCity, toCity, initialAnchorMin, lang = 'en' }: Props = $props();
+  const ampm = lang === 'en';
+
+  function fmtClock(h: number, mm: number): string {
+    if (!ampm) {
+      return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+    }
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    const sfx = h < 12 ? 'AM' : 'PM';
+    return `${h12}:${String(mm).padStart(2, '0')} ${sfx}`;
+  }
 
   const STEP = 30;
   const RANGE = 1440; // minutes in a day
@@ -72,12 +87,14 @@
     }).format(moment);
     return {
       moment,
-      str: `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
+      str: fmtClock(h, mm),
       hint: periodLabel(h, weekday),
     };
   }
 
   function bReadout(aMoment: Date, aWeekday: string) {
+    // Always extract hour/minute in 24h form so the day-shift / period-label
+    // logic stays simple; we re-format for display via fmtClock.
     const fmt = new Intl.DateTimeFormat('en-GB', {
       timeZone: toTz,
       hour: '2-digit',
@@ -92,7 +109,7 @@
     const weekday = get('weekday');
     const dayShift = weekday !== aWeekday;
     return {
-      str: `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
+      str: fmtClock(h, mm),
       hint: periodLabel(h, weekday) + (dayShift ? ' (next day)' : ''),
     };
   }

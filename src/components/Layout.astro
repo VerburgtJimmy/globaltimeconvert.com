@@ -133,15 +133,21 @@ const {
       will replace this with a more granular store, but for SSR pages the
       vanilla version keeps bundle size at zero.
 
+      Locale: the time-format locale is read from <html lang>. English uses
+      12h ("2:23:47 PM"); every other locale uses 24h ("14:23:47"). Mirror
+      of `usesAmPm()` / `formatLiveTime()` in src/lib/tz.ts — keep in sync.
+
       Format keys (set via data-format):
-        HH:mm:ss          → "14:23:47"        (24h, en-GB)
-        HH:mm             → "14:23"
+        HH:mm:ss          → "14:23:47" / "2:23:47 PM"  (locale-aware)
+        HH:mm             → "14:23"    / "2:23 PM"     (locale-aware)
         weekday-date      → "Sunday, May 3, 2026"
         weekday-tz        → "Sun · JST"       (compact)
         weekday-tz-offset → "Sunday · EDT · UTC-04:00"
     */}
     <script is:inline>
       (() => {
+        const pageLang = document.documentElement.lang || 'en';
+        const ampm = pageLang === 'en';
         const tzAbbr = (tz, d) => {
           try {
             const parts = new Intl.DateTimeFormat('en-US', {
@@ -156,12 +162,12 @@ const {
         const fmtTime = (tz, withSec) => {
           const opts = {
             timeZone: tz,
-            hour12: false,
-            hour: '2-digit',
+            hour12: ampm,
+            hour: ampm ? 'numeric' : '2-digit',
             minute: '2-digit',
           };
           if (withSec) opts.second = '2-digit';
-          return new Intl.DateTimeFormat('en-GB', opts).format(new Date());
+          return new Intl.DateTimeFormat(ampm ? 'en-US' : 'en-GB', opts).format(new Date());
         };
         const fmtWeekdayDate = (tz) =>
           new Intl.DateTimeFormat('en-US', {

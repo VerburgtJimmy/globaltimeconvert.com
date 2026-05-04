@@ -11,6 +11,7 @@ import {
   formatInZone,
   diffMin,
   describeDiff,
+  formatHmForLang,
 } from '../../lib/tz';
 import { t, pathFor, diffPhrase, type Locale } from '../../lib/i18n';
 
@@ -131,7 +132,7 @@ const description = t('templates.page.cityPair.metaDescription', lang, {
             data-clock={city.timezone_id}
             data-format="HH:mm"
           >
-            {String(time.hour).padStart(2, '0')}:{String(time.minute).padStart(2, '0')}
+            {formatHmForLang(time, lang)}
           </div>
           <div
             class="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-neutral-500 dark:text-neutral-400"
@@ -149,6 +150,7 @@ const description = t('templates.page.cityPair.metaDescription', lang, {
   <section class="mx-auto max-w-4xl px-6 pb-8">
     <YourTime
       client:load
+      lang={lang}
       momentIso={now.toISOString()}
       sourceLabel={`${t('ui.converter.now', lang)} in ${a.display_name}`}
     />
@@ -157,6 +159,7 @@ const description = t('templates.page.cityPair.metaDescription', lang, {
   <!-- Time slider -->
   <TimeSlider
     client:visible
+    lang={lang}
     fromTz={a.timezone_id}
     toTz={b.timezone_id}
     fromCity={a.display_name}
@@ -181,15 +184,11 @@ const description = t('templates.page.cityPair.metaDescription', lang, {
         {quickPicks.map((p) => (
           <div class="grid grid-cols-2 border-b border-hair px-1 py-4 text-[15px]">
             <div>
-              <span class="display-time">
-                {String(p.a.hour).padStart(2, '0')}:{String(p.a.minute).padStart(2, '0')}
-              </span>
+              <span class="display-time">{formatHmForLang(p.a, lang)}</span>
               <span class="ml-2 text-[13px] text-neutral-400">{p.a.weekday.slice(0, 3)}</span>
             </div>
             <div>
-              <span class="display-time">
-                {String(p.b.hour).padStart(2, '0')}:{String(p.b.minute).padStart(2, '0')}
-              </span>
+              <span class="display-time">{formatHmForLang(p.b, lang)}</span>
               <span class={'ml-2 text-[13px] ' + (p.bDayShifted ? 'text-accent-600' : 'text-neutral-400')}>
                 {p.b.weekday.slice(0, 3)}
               </span>
