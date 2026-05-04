@@ -1,15 +1,30 @@
 import type { APIRoute } from 'astro';
+import { getDb } from '../lib/db';
 import { SUPPORTED_LOCALES } from '../lib/i18n';
+import { PAIRS_URL_LIMIT } from '../lib/sitemap';
 
-// Sitemap index. We chunk by both type and locale because:
-//   - the pairs sitemap has 49,952 URLs per locale (just under the 50k limit)
-//   - 6 locales × 49,952 = ~300k URLs would overflow a single file
-// So we emit 12 chunks total (6 langs × {static, pairs}).
+// Sitemap index. Each locale gets:
+//   - 1 static sitemap (homepage, /about, /donate, city clocks, anchor-time URLs)
+//   - N pair sitemaps (chunked at 49,999 URLs each — one URL per directional pair)
+//
+// At 1000 cities: ~10k static + 999k pair URLs/locale → 1 static + 20 pair chunks.
+// At 5000 cities: ~50k static (right at limit, will need static sharding too) +
+//                 ~25M pair URLs/locale → ~500 pair chunks. Plan for it then.
+
+interface CountRow {
+  n: number;
+}
 
 export const prerender = false;
 
-export const GET: APIRoute = ({ site }) => {
+export const GET: APIRoute = async ({ site }) => {
   const today = new Date().toISOString().slice(0, 10);
+  const db = getDb();
+  const countResult = await db.prepare('SELECT COUNT(*) AS n FROM cities').first<CountRow>();
+  const cityCount = countResult?.n ?? 0;
+  const pairsPerLocale = cityCount * Math.max(cityCount - 1, 0);
+  const pairChunkCount = Math.ceil(pairsPerLocale / PAIRS_URL_LIMIT);
+
   const lines: string[] = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
@@ -18,9 +33,14 @@ export const GET: APIRoute = ({ site }) => {
     lines.push(
       sitemapEntry(new URL(`/sitemap-static-${lang}.xml`, site).toString(), today),
     );
-    lines.push(
-      sitemapEntry(new URL(`/sitemap-pairs-${lang}.xml`, site).toString(), today),
-    );
+    for (let chunk = 0; chunk < pairChunkCount; chunk++) {
+      lines.push(
+        sitemapEntry(
+          new URL(`/sitemap-pairs-${lang}-${chunk}.xml`, site).toString(),
+          today,
+        ),
+      );
+    }
   }
   lines.push('</sitemapindex>');
 

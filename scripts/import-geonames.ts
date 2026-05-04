@@ -1,10 +1,11 @@
 // One-shot import: downloads GeoNames dumps, generates `data/seed.sql`.
-// Run:    npm run data:import
+// Run:    npm run data:import           (defaults: TOP_N=1000)
+//         TOP_N=2000 npm run data:import (override for Phase 2 expansion)
 // Apply:  npm run db:seed:local
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { Readable } from 'node:stream';
@@ -16,9 +17,14 @@ import { pipeline } from 'node:stream/promises';
 
 const RAW_DIR = 'data/raw';
 const OUT_FILE = 'data/seed.sql';
-const TOP_N = 200;
+const TOP_N = Number.parseInt(process.env.TOP_N ?? '1000', 10);
 const CAPITAL_BONUS = 1_000_000;
-const POP_FLOOR = 50_000;
+const POP_FLOOR = 15_000; // matches cities15000.zip cutoff
+const CURATED_TRANSLATIONS_FILE = 'data/curated-translations.json';
+// Countries where admin1 (state/province code) is meaningful for slug
+// disambiguation — i.e., people actually search by it. Outside this set we
+// just append the country code, since admin1 codes are mostly opaque digits.
+const ADMIN1_DISAMBIG_COUNTRIES = new Set(['US', 'CA', 'AU', 'BR', 'IN', 'MX', 'RU']);
 
 // Map GeoNames language codes (often loose) to our 5 non-English locales.
 // English names live on `cities.name_en` directly, so 'en' is not here.
@@ -36,9 +42,12 @@ for (const [target, accepts] of Object.entries(LANG_ACCEPT)) {
 
 const SOURCES = {
   cities: {
-    url: 'https://download.geonames.org/export/dump/cities500.zip',
-    zip: 'cities500.zip',
-    txt: 'cities500.txt',
+    // cities15000.txt = ~25k cities ≥ 15k pop — small download, plenty of
+    // headroom for top-1000 ranking. Bump to cities5000 / cities500 for
+    // Phase 2+ when scaling past 5k cities.
+    url: 'https://download.geonames.org/export/dump/cities15000.zip',
+    zip: 'cities15000.zip',
+    txt: 'cities15000.txt',
   },
   altNames: {
     url: 'https://download.geonames.org/export/dump/alternateNamesV2.zip',
@@ -223,30 +232,108 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-function rank(rows: CityRow[]): RankedCity[] {
-  const scored: RankedCity[] = rows.map((r) => ({
+interface DisambiguatedCity extends RankedCity {
+  isDisambiguated: boolean;
+}
+
+function rank(rows: CityRow[]): DisambiguatedCity[] {
+  const scored: DisambiguatedCity[] = rows.map((r) => ({
     ...r,
     slug: '',
     score: r.population + (r.featureCode === 'PPLC' ? CAPITAL_BONUS : 0),
+    isDisambiguated: false,
   }));
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, TOP_N);
 
-  const seen = new Map<string, RankedCity>();
+  // Slug allocation: highest-scored city for a given base slug wins the
+  // bare form ("paris"); subsequent cities get a country-/admin-suffixed
+  // variant ("paris-tx-us"). If even that collides, append the GeoNames
+  // ID — guaranteed unique.
+  const seen = new Map<string, DisambiguatedCity>();
   for (const c of top) {
-    const s = slugify(c.ascii);
-    if (!s) throw new Error(`Empty slug for ${c.name} (id ${c.id})`);
-    const clash = seen.get(s);
-    if (clash) {
+    const base = slugify(c.ascii);
+    if (!base) throw new Error(`Empty slug for ${c.name} (id ${c.id})`);
+
+    if (!seen.has(base)) {
+      c.slug = base;
+      seen.set(base, c);
+      continue;
+    }
+
+    // Collision — try the disambiguated form.
+    const cc = c.countryCode.toLowerCase();
+    const a1 = c.admin1 ? slugify(c.admin1) : '';
+    const candidates: string[] = [];
+    if (ADMIN1_DISAMBIG_COUNTRIES.has(c.countryCode) && a1) {
+      candidates.push(`${base}-${a1}-${cc}`);
+    }
+    candidates.push(`${base}-${cc}`);
+    candidates.push(`${base}-${c.id}`); // last-resort uniqueness
+
+    let assigned = '';
+    for (const candidate of candidates) {
+      if (!seen.has(candidate)) {
+        assigned = candidate;
+        break;
+      }
+    }
+    if (!assigned) {
       throw new Error(
-        `Slug collision in top ${TOP_N}: "${s}" — ${c.name} (${c.countryCode}) vs ${clash.name} (${clash.countryCode}). ` +
-          `Add disambiguation logic before re-running.`,
+        `Could not disambiguate slug for ${c.name} (id ${c.id}, ${c.countryCode})`,
       );
     }
-    seen.set(s, c);
-    c.slug = s;
+    c.slug = assigned;
+    c.isDisambiguated = true;
+    seen.set(assigned, c);
   }
   return top;
+}
+
+interface CuratedTranslationsFile {
+  translations: Record<string, Partial<Record<'es' | 'pt' | 'de' | 'nl' | 'zh-CN', string>>>;
+}
+
+/**
+ * Layer hand-curated translations on top of GeoNames altNames. Curated wins
+ * for every city/lang pair where the user has provided a value — GeoNames'
+ * crowd-sourced altNames have wide variance in quality.
+ */
+async function loadCuratedTranslations(): Promise<Map<number, Map<string, string>>> {
+  if (!existsSync(CURATED_TRANSLATIONS_FILE)) return new Map();
+  const data: CuratedTranslationsFile = JSON.parse(
+    await readFile(CURATED_TRANSLATIONS_FILE, 'utf8'),
+  );
+  const result = new Map<number, Map<string, string>>();
+  for (const [idStr, langMap] of Object.entries(data.translations)) {
+    const id = Number.parseInt(idStr, 10);
+    if (!Number.isFinite(id)) continue;
+    const m = new Map<string, string>();
+    for (const [lang, name] of Object.entries(langMap)) {
+      if (name) m.set(lang, name);
+    }
+    if (m.size > 0) result.set(id, m);
+  }
+  return result;
+}
+
+function mergeTranslations(
+  geonames: Map<number, Map<string, string>>,
+  curated: Map<number, Map<string, string>>,
+): Map<number, Map<string, string>> {
+  const merged = new Map<number, Map<string, string>>();
+  // Start from GeoNames as the base
+  for (const [id, m] of geonames) merged.set(id, new Map(m));
+  // Overlay curated (curated wins)
+  for (const [id, m] of curated) {
+    let target = merged.get(id);
+    if (!target) {
+      target = new Map();
+      merged.set(id, target);
+    }
+    for (const [lang, name] of m) target.set(lang, name);
+  }
+  return merged;
 }
 
 // ---------------------------------------------------------------------------
@@ -303,7 +390,7 @@ function q(s: string | null | undefined): string {
 }
 
 function emitSeed(
-  cities: RankedCity[],
+  cities: DisambiguatedCity[],
   translations: Map<number, Map<string, string>>,
   countries: Map<string, CountryInfo>,
 ): string {
@@ -317,6 +404,15 @@ function emitSeed(
   // Note: D1 disallows explicit BEGIN/COMMIT — Wrangler runs each statement
   // through D1's HTTP API which uses an internal transaction per request.
   lines.push('PRAGMA defer_foreign_keys = TRUE;');
+  lines.push('');
+
+  // Wipe city + translations tables to keep things idempotent across re-runs
+  // (handles cities removed between phases, e.g. when Phase 2 reshuffles
+  // priorities and a city falls out of the top-N). Countries / timezones
+  // are additive — never delete, since FK references from cities matter.
+  lines.push('-- Reset tables that this seed fully owns -----------------------------');
+  lines.push('DELETE FROM city_translations;');
+  lines.push('DELETE FROM cities;');
   lines.push('');
 
   lines.push('-- Countries -----------------------------------------------------------');
@@ -343,10 +439,10 @@ function emitSeed(
   lines.push('');
 
   lines.push('-- Cities --------------------------------------------------------------');
-  let priority = TOP_N;
+  let priority = cities.length;
   for (const c of cities) {
     lines.push(
-      `INSERT OR REPLACE INTO cities (id, slug, name_en, ascii_name, country_code, admin1_code, population, latitude, longitude, timezone_id, is_disambiguated, prerender_priority) VALUES (${c.id}, ${q(c.slug)}, ${q(c.name)}, ${q(c.ascii)}, ${q(c.countryCode)}, ${q(c.admin1 || null)}, ${c.population}, ${c.lat}, ${c.lon}, ${q(c.timezone)}, 0, ${priority--});`,
+      `INSERT OR REPLACE INTO cities (id, slug, name_en, ascii_name, country_code, admin1_code, population, latitude, longitude, timezone_id, is_disambiguated, prerender_priority) VALUES (${c.id}, ${q(c.slug)}, ${q(c.name)}, ${q(c.ascii)}, ${q(c.countryCode)}, ${q(c.admin1 || null)}, ${c.population}, ${c.lat}, ${c.lon}, ${q(c.timezone)}, ${c.isDisambiguated ? 1 : 0}, ${priority--});`,
     );
   }
   lines.push('');
@@ -390,9 +486,21 @@ async function main(): Promise<void> {
   console.log(`  pop floor in top ${TOP_N}: ${minPop.toLocaleString()}`);
 
   console.log('▸ Parsing alternate names (slow — ~400MB scan)…');
-  const translations = await parseTranslations(altNamesPath, cityIds);
-  const totalT = [...translations.values()].reduce((acc, m) => acc + m.size, 0);
-  console.log(`  ${translations.size}/${top.length} cities with at least one translation, ${totalT} total`);
+  const geonamesTranslations = await parseTranslations(altNamesPath, cityIds);
+  const geoTotal = [...geonamesTranslations.values()].reduce((acc, m) => acc + m.size, 0);
+  console.log(`  GeoNames: ${geonamesTranslations.size}/${top.length} cities, ${geoTotal} entries`);
+
+  console.log('▸ Loading curated translations (if present)…');
+  const curatedTranslations = await loadCuratedTranslations();
+  const curatedTotal = [...curatedTranslations.values()].reduce((acc, m) => acc + m.size, 0);
+  console.log(`  Curated: ${curatedTranslations.size} cities, ${curatedTotal} entries (overlay; wins on conflict)`);
+
+  const translations = mergeTranslations(geonamesTranslations, curatedTranslations);
+  // Count only translations for cities actually in the seed — curated entries
+  // for cities outside the top-N would silently fail FK on insert.
+  let totalT = 0;
+  for (const c of top) totalT += translations.get(c.id)?.size ?? 0;
+  const disambiguatedCount = top.filter((c) => c.isDisambiguated).length;
 
   console.log('▸ Parsing countries…');
   const countries = await parseCountries(countriesPath);
@@ -404,10 +512,11 @@ async function main(): Promise<void> {
 
   console.log('');
   console.log(`✓ Wrote ${OUT_FILE} (${(out.length / 1024).toFixed(1)} KB)`);
-  console.log(`  cities:       ${top.length}`);
-  console.log(`  countries:    ${new Set(top.map((c) => c.countryCode)).size}`);
-  console.log(`  timezones:    ${new Set(top.map((c) => c.timezone)).size}`);
-  console.log(`  translations: ${totalT}`);
+  console.log(`  cities:         ${top.length}`);
+  console.log(`  disambiguated:  ${disambiguatedCount}`);
+  console.log(`  countries:      ${new Set(top.map((c) => c.countryCode)).size}`);
+  console.log(`  timezones:      ${new Set(top.map((c) => c.timezone)).size}`);
+  console.log(`  translations:   ${totalT} (merged: ${geoTotal} GeoNames + ${curatedTotal} curated)`);
 }
 
 main().catch((err) => {
