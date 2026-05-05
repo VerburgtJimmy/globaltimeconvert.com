@@ -43,21 +43,52 @@ const {
 <html lang={lang} class="h-full">
   <head>
     {/*
+      Color-scheme + background hints to eliminate the white-flash on hard
+      reloads / direct URL hits. The `<meta>` tells the browser to use the
+      system preference for UA defaults (scrollbars, form controls) before
+      any CSS loads. The inline `<style>` paints the document background
+      synchronously based on prefers-color-scheme + the .dark / .light
+      classes the theme script adds below. Order matters: this block runs
+      before the script and before Tailwind loads, so the page's first
+      painted pixel already matches the user's theme.
+    */}
+    <meta name="color-scheme" content="light dark" />
+    <style is:inline>
+      :root { background-color: #ffffff; }
+      @media (prefers-color-scheme: dark) {
+        :root { background-color: oklch(0.145 0 0); }
+      }
+      :root.dark { background-color: oklch(0.145 0 0); }
+      :root.light { background-color: #ffffff; }
+    </style>
+    {/*
       Anti-flash theme resolver — runs before stylesheets paint so the
       correct light/dark class is on <html> from the first frame. Reads
       a stored override from localStorage if the user has clicked the
-      theme toggle, otherwise falls back to the OS preference. The
-      Phase 3 ThemeToggle island keeps localStorage in sync.
+      theme toggle, otherwise falls back to the OS preference.
+
+      Re-applies on `astro:before-swap` so client-routed navigations
+      don't flip the theme: ClientRouter replaces <html>'s attributes
+      during the swap, which would otherwise strip our `dark` class.
+      Mutating `event.newDocument` here means the incoming page already
+      has the right class when the swap paints.
     */}
     <script is:inline>
       (() => {
-        try {
-          const stored = localStorage.getItem('theme');
-          const dark =
-            stored === 'dark' ||
-            (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          if (dark) document.documentElement.classList.add('dark');
-        } catch {}
+        function gtcApplyTheme(target) {
+          try {
+            const stored = localStorage.getItem('theme');
+            const dark =
+              stored === 'dark' ||
+              (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            target.classList.toggle('dark', dark);
+            target.classList.toggle('light', !dark);
+          } catch {}
+        }
+        gtcApplyTheme(document.documentElement);
+        document.addEventListener('astro:before-swap', (event) => {
+          gtcApplyTheme(event.newDocument.documentElement);
+        });
       })();
     </script>
     <Meta
