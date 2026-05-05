@@ -55,6 +55,7 @@
       "country": "Land",
       "observed": "Beachtet",
       "notObserved": "Nicht beachtet",
+      "dstNextChange": "nächste Umstellung {date} (Uhren {dir}1 h)",
       "millionsSuffix": "Millionen",
       "thousandsSuffix": "Tausend",
       "compareIntro": "Alle Zeiten live. Klicke eine Stadt, um deren Konverter zu öffnen.",
@@ -91,8 +92,8 @@
         "metaDescription": "Aktuelle Ortszeit in {city}, {country}. Live-Uhr, Zeitzone und Sommerzeit-Info — keine Werbung, keine Cookies."
       },
       "cityPair": {
-        "title": "{cityA} nach {cityB} — Zeitumrechner",
-        "h1": "Zeitunterschied {cityA} – {cityB}",
+        "title": "Zeitunterschied: {cityA} – {cityB}",
+        "h1": "Zeitunterschied zwischen {cityA} und {cityB}",
         "summaryAhead": "{cityA} ist {phrase} {cityB} gerade.",
         "summaryBehind": "{cityA} ist {phrase} {cityB} gerade.",
         "summarySame": "{cityA} und {cityB} sind gerade in derselben Zeitzone.",

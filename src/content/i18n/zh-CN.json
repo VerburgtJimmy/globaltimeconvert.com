@@ -55,6 +55,7 @@
       "country": "国家",
       "observed": "实行",
       "notObserved": "不实行",
+      "dstNextChange": "下次变更 {date}（时钟{dir}1 小时）",
       "millionsSuffix": "百万",
       "thousandsSuffix": "千",
       "compareIntro": "所有时间均为实时。点击任意城市打开转换器。",
@@ -91,7 +92,7 @@
         "metaDescription": "{city}（{country}）的当前本地时间。实时时钟、时区和夏令时信息——无广告、无 Cookie。"
       },
       "cityPair": {
-        "title": "{cityA}至{cityB} — 时间转换器",
+        "title": "时差：{cityA}与{cityB}",
         "h1": "{cityA}与{cityB}的时差",
         "summaryAhead": "现在{cityA}比{cityB}{phrase}。",
         "summaryBehind": "现在{cityA}比{cityB}{phrase}。",

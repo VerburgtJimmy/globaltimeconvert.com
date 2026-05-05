@@ -12,6 +12,7 @@ import {
   formatInZone,
   formatOffset,
   observesDst,
+  nextDstTransition,
   diffMin,
   describeDiff,
   formatHmsForLang,
@@ -30,6 +31,29 @@ const now = new Date();
 const time = formatInZone(now, city.timezone_id);
 const offset = formatOffset(time.offsetMin);
 const dst = observesDst(city.timezone_id);
+const dstNext = dst ? nextDstTransition(city.timezone_id, now) : null;
+
+// Locale-aware date string for the DST next-change line.
+function dateLabelFor(at: Date, lang: Locale): string {
+  const tag = lang === 'zh-CN' ? 'zh-CN' : lang;
+  return new Intl.DateTimeFormat(tag, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: city.timezone_id,
+  }).format(at);
+}
+
+const dstLine = (() => {
+  if (!dst) return t('ui.common.notObserved', lang);
+  const observed = t('ui.common.observed', lang);
+  if (!dstNext) return observed;
+  const next = t('ui.common.dstNextChange', lang, {
+    date: dateLabelFor(dstNext.at, lang),
+    dir: dstNext.forward ? '+' : '−',
+  });
+  return `${observed} · ${next}`;
+})();
 
 const db = getDb();
 const others = await getCitiesAcrossZones(db, city.id, 12, lang);
@@ -182,7 +206,7 @@ const extraStructuredData = [
       </div>
       <div>
         <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.daylightSaving', lang)}</dt>
-        <dd class="text-[14px]">{dst ? t('ui.common.observed', lang) : t('ui.common.notObserved', lang)}</dd>
+        <dd class="text-[14px]">{dstLine}</dd>
       </div>
       <div>
         <dt class="mb-1.5 text-[12px] text-neutral-500 dark:text-neutral-400">{t('ui.common.population', lang)}</dt>

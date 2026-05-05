@@ -55,6 +55,7 @@
       "country": "País",
       "observed": "Observado",
       "notObserved": "No observado",
+      "dstNextChange": "próximo cambio {date} (relojes {dir}1h)",
       "millionsSuffix": "millones",
       "thousandsSuffix": "mil",
       "compareIntro": "Todas las horas en vivo. Haz clic en una ciudad para abrir su conversor.",
@@ -91,8 +92,8 @@
         "metaDescription": "Hora local actual en {city}, {country}. Reloj en vivo, zona horaria e información de horario de verano — sin anuncios, sin cookies."
       },
       "cityPair": {
-        "title": "{cityA} a {cityB} — Conversor de hora",
-        "h1": "Diferencia horaria de {cityA} a {cityB}",
+        "title": "Diferencia horaria: {cityA} a {cityB}",
+        "h1": "Diferencia horaria entre {cityA} y {cityB}",
         "summaryAhead": "{cityA} va {phrase} {cityB} ahora mismo.",
         "summaryBehind": "{cityA} va {phrase} {cityB} ahora mismo.",
         "summarySame": "{cityA} y {cityB} están en la misma zona horaria ahora.",
