@@ -54,12 +54,14 @@ const {
     */}
     <meta name="color-scheme" content="light dark" />
     <style is:inline>
+      /* First-frame background hint. Once the inlined Tailwind stylesheet
+         (configured via build.inlineStylesheets='always') applies, the
+         body's bg-white / dark:bg-neutral-950 takes over. The class-based
+         dark/light overrides live in Tailwind now — no need to duplicate. */
       :root { background-color: #ffffff; }
       @media (prefers-color-scheme: dark) {
         :root { background-color: oklch(0.145 0 0); }
       }
-      :root.dark { background-color: oklch(0.145 0 0); }
-      :root.light { background-color: #ffffff; }
     </style>
     {/*
       Anti-flash theme resolver — runs before stylesheets paint so the

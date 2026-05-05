@@ -15,6 +15,16 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
+  build: {
+    // Inline the full stylesheet into each HTML response. Default 'auto'
+    // only inlines CSS under 4 KB; ours is ~30 KB. With external CSS, on
+    // hard reload the browser was sometimes painting with browser defaults
+    // (purple visited links, unstyled nav) before the stylesheet arrived,
+    // because the <link rel="stylesheet"> sits after the ClientRouter
+    // module script in head order. Inlining trades ~6–8 KB gzipped per
+    // HTML response for zero FOUC.
+    inlineStylesheets: 'always',
+  },
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'es', 'pt', 'de', 'nl', 'zh-CN'],
