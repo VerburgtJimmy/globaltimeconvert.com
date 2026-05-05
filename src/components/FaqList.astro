@@ -1,0 +1,56 @@
+---
+// Calm <details>/<summary> FAQ block. No JavaScript — semantic HTML only.
+// Mirrors the comparison-rows visual language: hairline borders, accent on
+// the chevron rotation, ≤120ms motion. Used on city and pair pages.
+
+import type { FaqItem } from '../lib/seo';
+
+interface Props {
+  heading: string;
+  items: FaqItem[];
+}
+
+const { heading, items } = Astro.props as Props;
+---
+
+<section class="mx-auto max-w-4xl border-t border-hair px-6 py-14">
+  <h2 class="text-[20px] font-semibold tracking-tight sm:text-[22px]">{heading}</h2>
+  <div class="mt-8 border-t border-hair">
+    {items.map((item) => (
+      <details class="group border-b border-hair">
+        <summary
+          class="flex cursor-pointer list-none items-center justify-between gap-6 px-1 py-5 text-[15px] font-medium transition-colors hover:text-accent-600"
+        >
+          <span>{item.question}</span>
+          <svg
+            class="h-3.5 w-3.5 shrink-0 text-neutral-400 transition-transform duration-100 group-open:rotate-180 dark:text-neutral-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </summary>
+        <div class="px-1 pt-1 pb-6 text-[14.5px] leading-7 text-neutral-600 dark:text-neutral-400">
+          {item.answer}
+        </div>
+      </details>
+    ))}
+  </div>
+</section>
+
+<style>
+  /* Hide the default disclosure triangle in WebKit / Firefox. */
+  details > summary::-webkit-details-marker {
+    display: none;
+  }
+  details > summary {
+    list-style: none;
+  }
+</style>

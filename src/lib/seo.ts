@@ -3,7 +3,8 @@
 //   - Organization      — global, always emitted
 //   - WebSite           — homepage only, with SearchAction for sitelinks searchbox
 //   - BreadcrumbList    — every non-home page
-//   - FAQPage           — pages with FAQ blocks (none in v1; reserved)
+//   - Place             — city pages (with geo + IANA timezone)
+//   - FAQPage           — city + pair pages, 3 Q&As each
 
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, pathFor, type Locale } from './i18n';
 
@@ -61,6 +62,72 @@ export function buildBreadcrumbList(
       name: item.name,
       item: new URL(item.url, site).toString(),
     })),
+  };
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+/**
+ * FAQPage schema. Each Q/A pair becomes a Question entity. Google requires
+ * the answer text to match what's actually rendered on the page — keep these
+ * in sync with the visual FaqList component.
+ */
+export function buildFAQPage(items: FaqItem[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+export interface PlaceArgs {
+  name: string;
+  countryName: string;
+  /** ISO-3166-1 alpha-2 */
+  countryCode: string;
+  latitude: number;
+  longitude: number;
+  /** IANA zone, e.g. "Asia/Tokyo" */
+  timezoneId: string;
+}
+
+/**
+ * Place schema for /time-in-{city} pages. We expose IANA timezone as
+ * `additionalProperty` since schema.org has no first-class timezone field.
+ */
+export function buildPlace(args: PlaceArgs): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Place',
+    name: args.name,
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: args.latitude,
+      longitude: args.longitude,
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressCountry: args.countryCode,
+    },
+    containedInPlace: {
+      '@type': 'Country',
+      name: args.countryName,
+    },
+    additionalProperty: {
+      '@type': 'PropertyValue',
+      name: 'IANA timezone',
+      value: args.timezoneId,
+    },
   };
 }
 

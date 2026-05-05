@@ -6,14 +6,17 @@
 import Layout from '../Layout.astro';
 import TimeSlider from '../islands/TimeSlider.svelte';
 import YourTime from '../islands/YourTime.svelte';
+import FaqList from '../FaqList.astro';
 import type { CityWithCountry } from '../../lib/db';
 import {
   formatInZone,
   diffMin,
   describeDiff,
+  observesDst,
   formatHmForLang,
 } from '../../lib/tz';
 import { t, pathFor, diffPhrase, type Locale } from '../../lib/i18n';
+import { buildFAQPage, type FaqItem } from '../../lib/seo';
 
 interface Props {
   lang: Locale;
@@ -76,6 +79,44 @@ const description = t('templates.page.cityPair.metaDescription', lang, {
   cityB: b.display_name,
   phrase: localizedDiff,
 });
+
+// FAQ — 3 questions per the SEO plan. Q3 picks one of three answer
+// templates depending on which (if any) of the cities observes DST.
+const aDst = observesDst(a.timezone_id);
+const bDst = observesDst(b.timezone_id);
+const faqVars = {
+  cityA: a.display_name,
+  cityB: b.display_name,
+  phrase: localizedDiff,
+};
+const a3Key = aDst && bDst
+  ? 'templates.page.cityPair.faq.a3BothYes'
+  : !aDst && !bDst
+    ? 'templates.page.cityPair.faq.a3BothNo'
+    : 'templates.page.cityPair.faq.a3OneOnly';
+const dstCity = aDst ? a.display_name : b.display_name;
+const nonDstCity = aDst ? b.display_name : a.display_name;
+const faqs: FaqItem[] = [
+  {
+    question: t('templates.page.cityPair.faq.q1', lang, faqVars),
+    answer: t(
+      diff.same ? 'templates.page.cityPair.faq.a1Same' : 'templates.page.cityPair.faq.a1Diff',
+      lang,
+      faqVars,
+    ),
+  },
+  {
+    question: t('templates.page.cityPair.faq.q2', lang, faqVars),
+    answer: t('templates.page.cityPair.faq.a2', lang, faqVars),
+  },
+  {
+    question: t('templates.page.cityPair.faq.q3', lang, faqVars),
+    answer: t(a3Key, lang, { ...faqVars, dstCity, nonDstCity }),
+  },
+];
+const faqHeading = t('templates.page.cityPair.faq.heading', lang);
+
+const extraStructuredData = [buildFAQPage(faqs)];
 ---
 
 <Layout
@@ -83,6 +124,7 @@ const description = t('templates.page.cityPair.metaDescription', lang, {
   description={description}
   lang={lang}
   breadcrumbs={breadcrumbs}
+  extraStructuredData={extraStructuredData}
 >
   <div class="mx-auto max-w-4xl px-6 pt-10">
     <nav class="text-[13px] text-neutral-500 dark:text-neutral-400" aria-label="Breadcrumb">
@@ -214,4 +256,6 @@ const description = t('templates.page.cityPair.metaDescription', lang, {
       </a>
     </div>
   </section>
+
+  <FaqList heading={faqHeading} items={faqs} />
 </Layout>
