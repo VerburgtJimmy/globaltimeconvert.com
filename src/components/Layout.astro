@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import Header from './Header.astro';
 import Footer from './Footer.astro';
 import Meta from './seo/Meta.astro';
@@ -42,21 +43,52 @@ const {
 <html lang={lang} class="h-full">
   <head>
     {/*
+      Color-scheme + background hints to eliminate the white-flash on hard
+      reloads / direct URL hits. The `<meta>` tells the browser to use the
+      system preference for UA defaults (scrollbars, form controls) before
+      any CSS loads. The inline `<style>` paints the document background
+      synchronously based on prefers-color-scheme + the .dark / .light
+      classes the theme script adds below. Order matters: this block runs
+      before the script and before Tailwind loads, so the page's first
+      painted pixel already matches the user's theme.
+    */}
+    <meta name="color-scheme" content="light dark" />
+    <style is:inline>
+      :root { background-color: #ffffff; }
+      @media (prefers-color-scheme: dark) {
+        :root { background-color: oklch(0.145 0 0); }
+      }
+      :root.dark { background-color: oklch(0.145 0 0); }
+      :root.light { background-color: #ffffff; }
+    </style>
+    {/*
       Anti-flash theme resolver — runs before stylesheets paint so the
       correct light/dark class is on <html> from the first frame. Reads
       a stored override from localStorage if the user has clicked the
-      theme toggle, otherwise falls back to the OS preference. The
-      Phase 3 ThemeToggle island keeps localStorage in sync.
+      theme toggle, otherwise falls back to the OS preference.
+
+      Re-applies on `astro:before-swap` so client-routed navigations
+      don't flip the theme: ClientRouter replaces <html>'s attributes
+      during the swap, which would otherwise strip our `dark` class.
+      Mutating `event.newDocument` here means the incoming page already
+      has the right class when the swap paints.
     */}
     <script is:inline>
       (() => {
-        try {
-          const stored = localStorage.getItem('theme');
-          const dark =
-            stored === 'dark' ||
-            (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
-          if (dark) document.documentElement.classList.add('dark');
-        } catch {}
+        function gtcApplyTheme(target) {
+          try {
+            const stored = localStorage.getItem('theme');
+            const dark =
+              stored === 'dark' ||
+              (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            target.classList.toggle('dark', dark);
+            target.classList.toggle('light', !dark);
+          } catch {}
+        }
+        gtcApplyTheme(document.documentElement);
+        document.addEventListener('astro:before-swap', (event) => {
+          gtcApplyTheme(event.newDocument.documentElement);
+        });
       })();
     </script>
     <Meta
@@ -70,6 +102,16 @@ const {
       localesAvailable={localesAvailable}
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/*
+      Client-side router for smooth same-origin navigation. Without this,
+      every internal link is a full document load — the browser briefly
+      blanks the page while the new HTML arrives, which on Cloudflare-edge
+      latency reads as "white flash + favicon" between every click. The
+      router fetches the next page in the background, then cross-fades.
+      Falls back to full reload on browsers that don't support the View
+      Transitions API.
+    */}
+    <ClientRouter />
   </head>
   <body
     class="flex h-full min-h-screen flex-col bg-white font-sans text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100"
@@ -81,49 +123,56 @@ const {
     {!noFooter && <Footer lang={lang} />}
 
     {/*
-      Pageview beacon (PLAN §7). Fires once per page load. Uses
+      Pageview beacon (PLAN §7). Fires once per page navigation. Uses
       `navigator.sendBeacon` when available so the request survives even if
       the user navigates away immediately. Privacy posture: we send only the
       path, language, referrer domain (never the full URL), and UTM params.
       The server adds country (region-anonymised) and a daily-salted hash of
       the IP — the IP itself is never persisted.
+
+      With ClientRouter active, fires on initial load AND every subsequent
+      `astro:page-load` event so client-routed navigations are tracked too.
     */}
     <script is:inline>
       (() => {
-        try {
-          const url = new URL(location.href);
-          const refRaw = document.referrer;
-          let ref = '';
+        function gtcSendBeacon() {
           try {
-            if (refRaw && new URL(refRaw).origin !== location.origin) {
-              ref = new URL(refRaw).hostname;
+            const url = new URL(location.href);
+            const refRaw = document.referrer;
+            let ref = '';
+            try {
+              if (refRaw && new URL(refRaw).origin !== location.origin) {
+                ref = new URL(refRaw).hostname;
+              }
+            } catch {}
+            const utm = {
+              s: url.searchParams.get('utm_source') || undefined,
+              m: url.searchParams.get('utm_medium') || undefined,
+              c: url.searchParams.get('utm_campaign') || undefined,
+            };
+            const body = JSON.stringify({
+              path: url.pathname,
+              lang: document.documentElement.lang || 'en',
+              ref: ref || undefined,
+              utm: utm.s || utm.m || utm.c ? utm : undefined,
+            });
+            const headers = { type: 'application/json' };
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon('/api/beacon', new Blob([body], headers));
+            } else {
+              fetch('/api/beacon', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body,
+                keepalive: true,
+              }).catch(() => {});
             }
-          } catch {}
-          const utm = {
-            s: url.searchParams.get('utm_source') || undefined,
-            m: url.searchParams.get('utm_medium') || undefined,
-            c: url.searchParams.get('utm_campaign') || undefined,
-          };
-          const body = JSON.stringify({
-            path: url.pathname,
-            lang: document.documentElement.lang || 'en',
-            ref: ref || undefined,
-            utm: utm.s || utm.m || utm.c ? utm : undefined,
-          });
-          const headers = { type: 'application/json' };
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon('/api/beacon', new Blob([body], headers));
-          } else {
-            fetch('/api/beacon', {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body,
-              keepalive: true,
-            }).catch(() => {});
+          } catch {
+            /* analytics must never break the page */
           }
-        } catch {
-          /* analytics must never break the page */
         }
+        gtcSendBeacon();
+        document.addEventListener('astro:page-load', gtcSendBeacon);
       })();
     </script>
 
@@ -146,8 +195,11 @@ const {
     */}
     <script is:inline>
       (() => {
-        const pageLang = document.documentElement.lang || 'en';
-        const ampm = pageLang === 'en';
+        // Setup-once guard — with ClientRouter, this <script> may otherwise
+        // re-execute on swap and stack multiple setIntervals.
+        if (window.__gtcClockReady) return;
+        window.__gtcClockReady = true;
+
         const tzAbbr = (tz, d) => {
           try {
             const parts = new Intl.DateTimeFormat('en-US', {
@@ -160,6 +212,9 @@ const {
           }
         };
         const fmtTime = (tz, withSec) => {
+          // Read locale fresh per tick — after a client-routed nav from /
+          // (en) to /es/, the captured value would otherwise stay stale.
+          const ampm = (document.documentElement.lang || 'en') === 'en';
           const opts = {
             timeZone: tz,
             hour12: ampm,
