@@ -6,6 +6,7 @@
 
 import Layout from '../Layout.astro';
 import YourTime from '../islands/YourTime.svelte';
+import FaqList from '../FaqList.astro';
 import { getDb, getCitiesAcrossZones, type CityWithCountry } from '../../lib/db';
 import {
   formatInZone,
@@ -16,6 +17,7 @@ import {
   formatHmsForLang,
 } from '../../lib/tz';
 import { t, pathFor, diffPhrase, type Locale } from '../../lib/i18n';
+import { buildFAQPage, buildPlace, type FaqItem } from '../../lib/seo';
 
 interface Props {
   lang: Locale;
@@ -66,6 +68,49 @@ const breadcrumbs = [
     url: pathFor(`/time-in-${city.slug}`, lang),
   },
 ];
+
+// FAQ — 3 questions per the SEO plan. Answers reference content on the
+// page so they match what's actually rendered (Google requires that).
+const faqVars = {
+  city: city.display_name,
+  tz: city.timezone_id,
+  offset,
+};
+const faqs: FaqItem[] = [
+  {
+    question: t('templates.page.cityClock.faq.q1', lang, faqVars),
+    answer: t(
+      dst ? 'templates.page.cityClock.faq.a1Dst' : 'templates.page.cityClock.faq.a1NoDst',
+      lang,
+      faqVars,
+    ),
+  },
+  {
+    question: t('templates.page.cityClock.faq.q2', lang, faqVars),
+    answer: t(
+      dst ? 'templates.page.cityClock.faq.a2Yes' : 'templates.page.cityClock.faq.a2No',
+      lang,
+      faqVars,
+    ),
+  },
+  {
+    question: t('templates.page.cityClock.faq.q3', lang, faqVars),
+    answer: t('templates.page.cityClock.faq.a3', lang, faqVars),
+  },
+];
+const faqHeading = t('templates.page.cityClock.faq.heading', lang);
+
+const extraStructuredData = [
+  buildPlace({
+    name: city.display_name,
+    countryName: city.country_name,
+    countryCode: city.country_code,
+    latitude: city.latitude,
+    longitude: city.longitude,
+    timezoneId: city.timezone_id,
+  }),
+  buildFAQPage(faqs),
+];
 ---
 
 <Layout
@@ -73,6 +118,7 @@ const breadcrumbs = [
   description={description}
   lang={lang}
   breadcrumbs={breadcrumbs}
+  extraStructuredData={extraStructuredData}
 >
   <!-- Breadcrumb -->
   <div class="mx-auto max-w-4xl px-6 pt-10">
@@ -183,4 +229,6 @@ const breadcrumbs = [
       ))}
     </div>
   </section>
+
+  <FaqList heading={faqHeading} items={faqs} />
 </Layout>

@@ -88,7 +88,18 @@
         "dstYes": "{city} observes daylight saving time.",
         "dstNo": "{city} does not observe daylight saving time.",
         "compareHeading": "{city} time compared to other cities",
-        "metaDescription": "Current local time in {city}, {country}. Live clock, timezone, and DST info — no ads, no cookies."
+        "metaDescription": "Current local time in {city}, {country}. Live clock, timezone, and DST info — no ads, no cookies.",
+        "faq": {
+          "heading": "Common questions",
+          "q1": "What time zone is {city} in?",
+          "a1Dst": "{city} is in the {tz} time zone ({offset} from UTC). The region observes daylight saving time, so the offset shifts by one hour twice a year.",
+          "a1NoDst": "{city} is in the {tz} time zone ({offset} from UTC). The region stays on {tz} year-round and does not observe daylight saving time.",
+          "q2": "Does {city} observe daylight saving time?",
+          "a2Yes": "Yes — {city} observes daylight saving time. Clocks move forward one hour in spring and back one hour in autumn, in line with the rest of the {tz} region.",
+          "a2No": "No — {city} stays on {tz} year-round. Clocks here do not change for daylight saving time.",
+          "q3": "How do I convert {city} time to my local time?",
+          "a3": "The \"Your time\" section above this FAQ converts the current moment in {city} to your local time zone automatically. To convert a different time, open any of the city-pair links in the comparison list above."
+        }
       },
       "cityPair": {
         "title": "{cityA} to {cityB} Time Converter",
@@ -101,7 +112,19 @@
         "metaDescription": "Convert time between {cityA} and {cityB}. {cityA} is {phrase} {cityB}. Compare any time, no ads, no cookies.",
         "diffAhead": "{n} hours ahead of",
         "diffBehind": "{n} hours behind",
-        "diffSame": "in the same timezone as"
+        "diffSame": "in the same timezone as",
+        "faq": {
+          "heading": "Common questions",
+          "q1": "What is the time difference between {cityA} and {cityB}?",
+          "a1Diff": "{cityA} is currently {phrase} {cityB}.",
+          "a1Same": "{cityA} and {cityB} are in the same time zone right now, so there is no time difference.",
+          "q2": "When is the best time to schedule a meeting between {cityA} and {cityB}?",
+          "a2": "Use the time slider above to find a working time. Most teams aim for the overlap between standard business hours (9 AM – 5 PM) in each city. The quick-pick table below the slider shows common business-hour conversions you can copy from directly.",
+          "q3": "Does {cityA} or {cityB} observe daylight saving time?",
+          "a3BothYes": "Both {cityA} and {cityB} observe daylight saving time. The time difference between them stays roughly constant, but the absolute UTC offsets shift seasonally.",
+          "a3BothNo": "Neither {cityA} nor {cityB} observes daylight saving time. The offset between them is constant throughout the year.",
+          "a3OneOnly": "{dstCity} observes daylight saving time; {nonDstCity} does not. The time difference between them changes by one hour at each DST transition."
+        }
       },
       "about": {
         "title": "About — globaltimeconvert.com",
