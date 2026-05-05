@@ -187,6 +187,49 @@ export function observesDst(tz: string): boolean {
   return getOffsetMin(winter, tz) !== getOffsetMin(summer, tz);
 }
 
+export interface DstTransition {
+  /** UTC moment of the transition. */
+  at: Date;
+  /** True if clocks move forward (spring forward / start DST). */
+  forward: boolean;
+}
+
+/**
+ * Find the next DST transition for a zone after `after`. Returns null if the
+ * zone doesn't observe DST or no transition lands in the next ~14 months.
+ *
+ * Strategy: walk forward 1 day at a time scanning for an offset change, then
+ * binary-search to the minute. Total cost ~430 Intl.format calls per render
+ * for a DST zone — acceptable for SSR pages that get edge-cached.
+ */
+export function nextDstTransition(
+  tz: string,
+  after: Date = new Date(),
+): DstTransition | null {
+  if (!observesDst(tz)) return null;
+
+  let cur = new Date(after.getTime());
+  let curOff = getOffsetMin(cur, tz);
+  for (let i = 0; i < 420; i++) {
+    const next = new Date(cur.getTime() + 24 * 3600 * 1000);
+    const nextOff = getOffsetMin(next, tz);
+    if (nextOff !== curOff) {
+      // Binary-search to the minute when the change happens.
+      let lo = cur.getTime();
+      let hi = next.getTime();
+      while (hi - lo > 60 * 1000) {
+        const mid = Math.floor((lo + hi) / 2);
+        if (getOffsetMin(new Date(mid), tz) === curOff) lo = mid;
+        else hi = mid;
+      }
+      return { at: new Date(hi), forward: nextOff > curOff };
+    }
+    cur = next;
+    curOff = nextOff;
+  }
+  return null;
+}
+
 /**
  * Build the UTC moment that has wall-clock `time` in `inTz` on today's date
  * (today's date evaluated in `inTz`, so DST and date rollovers Just Work).

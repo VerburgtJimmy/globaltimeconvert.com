@@ -55,6 +55,7 @@
       "country": "Land",
       "observed": "Gevolgd",
       "notObserved": "Niet gevolgd",
+      "dstNextChange": "volgende wijziging {date} (klokken {dir}1 u)",
       "millionsSuffix": "miljoen",
       "thousandsSuffix": "duizend",
       "compareIntro": "Alle tijden live. Klik op een stad om de converter te openen.",
@@ -91,8 +92,8 @@
         "metaDescription": "Huidige lokale tijd in {city}, {country}. Live klok, tijdzone en zomertijd-info — geen advertenties, geen cookies."
       },
       "cityPair": {
-        "title": "{cityA} naar {cityB} — Tijdconverter",
-        "h1": "Tijdverschil {cityA} – {cityB}",
+        "title": "Tijdverschil: {cityA} – {cityB}",
+        "h1": "Tijdverschil tussen {cityA} en {cityB}",
         "summaryAhead": "{cityA} loopt {phrase} {cityB} op dit moment.",
         "summaryBehind": "{cityA} loopt {phrase} {cityB} op dit moment.",
         "summarySame": "{cityA} en {cityB} staan nu in dezelfde tijdzone.",

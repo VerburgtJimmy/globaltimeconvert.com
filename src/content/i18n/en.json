@@ -55,6 +55,7 @@
       "country": "Country",
       "observed": "Observed",
       "notObserved": "Not observed",
+      "dstNextChange": "next change {date} (clocks {dir}1h)",
       "millionsSuffix": "million",
       "thousandsSuffix": "thousand",
       "compareIntro": "All times shown live. Click any city to open its converter.",
@@ -102,8 +103,8 @@
         }
       },
       "cityPair": {
-        "title": "{cityA} to {cityB} Time Converter",
-        "h1": "{cityA} to {cityB} time difference",
+        "title": "Time difference: {cityA} to {cityB}",
+        "h1": "Time difference between {cityA} and {cityB}",
         "summaryAhead": "{cityA} is {phrase} {cityB} right now.",
         "summaryBehind": "{cityA} is {phrase} {cityB} right now.",
         "summarySame": "{cityA} and {cityB} are in the same timezone right now.",

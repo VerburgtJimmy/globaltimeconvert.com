@@ -16,7 +16,7 @@ import {
   observesDst,
   formatHmForLang,
 } from '../../lib/tz';
-import { displayTime, type TimeOfDay } from '../../lib/time-slugs';
+import { displayTime, formatTimePrefix, type TimeOfDay } from '../../lib/time-slugs';
 import { t, pathFor, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -162,7 +162,7 @@ const breadcrumbs = [
     <div class="border-t border-hair">
       {compareRows.map(({ other, f, dayShift }) => (
         <a
-          href={pathFor(`/${city.slug}-to-${other.slug}`, lang)}
+          href={pathFor(`/${formatTimePrefix(time, lang)}-${city.slug}-to-${other.slug}`, lang)}
           class="grid grid-cols-[1fr_auto] items-baseline border-b border-hair px-1 py-5 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900/60"
         >
           <div>
