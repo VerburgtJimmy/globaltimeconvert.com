@@ -1,6 +1,7 @@
 // One-shot import: downloads GeoNames dumps, generates `data/seed.sql`.
-// Run:    npm run data:import           (defaults: TOP_N=1000)
-//         TOP_N=2000 npm run data:import (override for Phase 2 expansion)
+// Run:    npm run data:import           (defaults: TOP_N=2500 — v1 release set)
+//         TOP_N=5000 npm run data:import (override; Phase 2 will swap source
+//                                         to cities500.zip for tighter floor)
 // Apply:  npm run db:seed:local
 
 import { execFileSync } from 'node:child_process';
@@ -17,9 +18,9 @@ import { pipeline } from 'node:stream/promises';
 
 const RAW_DIR = 'data/raw';
 const OUT_FILE = 'data/seed.sql';
-const TOP_N = Number.parseInt(process.env.TOP_N ?? '1000', 10);
+const TOP_N = Number.parseInt(process.env.TOP_N ?? '2500', 10);
 const CAPITAL_BONUS = 1_000_000;
-const POP_FLOOR = 15_000; // matches cities15000.zip cutoff
+const POP_FLOOR = 5_000; // matches cities5000.zip cutoff
 const CURATED_TRANSLATIONS_FILE = 'data/curated-translations.json';
 // Countries where admin1 (state/province code) is meaningful for slug
 // disambiguation — i.e., people actually search by it. Outside this set we
@@ -42,12 +43,13 @@ for (const [target, accepts] of Object.entries(LANG_ACCEPT)) {
 
 const SOURCES = {
   cities: {
-    // cities15000.txt = ~25k cities ≥ 15k pop — small download, plenty of
-    // headroom for top-1000 ranking. Bump to cities5000 / cities500 for
-    // Phase 2+ when scaling past 5k cities.
-    url: 'https://download.geonames.org/export/dump/cities15000.zip',
-    zip: 'cities15000.zip',
-    txt: 'cities15000.txt',
+    // cities5000.txt = ~50k cities ≥ 5k pop — gives full coverage of small
+    // capital cities (e.g. Vatican, Funafuti) which the capital bonus would
+    // otherwise miss in cities15000. Bump to cities500.zip for Phase 2 when
+    // scaling past ~5k cities.
+    url: 'https://download.geonames.org/export/dump/cities5000.zip',
+    zip: 'cities5000.zip',
+    txt: 'cities5000.txt',
   },
   altNames: {
     url: 'https://download.geonames.org/export/dump/alternateNamesV2.zip',

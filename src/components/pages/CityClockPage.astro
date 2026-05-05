@@ -178,8 +178,11 @@ const extraStructuredData = [
     </div>
   </section>
 
-  <!-- Your time (filled in client-side; pages stay edge-cacheable) -->
-  <section class="mx-auto max-w-4xl border-t border-hair px-6 py-12">
+  <!-- Your time (filled in client-side; pages stay edge-cacheable).
+       No outer border-t — the YourTime card has its own hairline, so adding
+       one here would double-line under the hero. Pair pages use the same
+       no-outer-border pattern. -->
+  <section class="mx-auto max-w-4xl px-6 py-12">
     <YourTime
       client:load
       lang={lang}
