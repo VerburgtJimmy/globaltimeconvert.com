@@ -40,28 +40,51 @@ export const prerender = false;
 const CACHE_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 // Inter TTF lives in public/fonts/. Module-scoped cache means one fetch per
-// Worker isolate; subsequent requests skip the network call.
+// Worker isolate; subsequent requests skip the asset lookup.
+//
+// Prod path: env.ASSETS (the static-asset binding auto-injected by
+// @astrojs/cloudflare) reads the file directly without an HTTP round-trip.
+// A worker fetching its own zone URL via global fetch() goes through
+// Cloudflare's edge plumbing which doesn't reliably serve the worker's own
+// static assets — the same path served fine from the outside (curl returns
+// 200) silently errors from inside the worker.
+//
+// Dev fallback: `astro dev` doesn't expose env.ASSETS, but Vite serves
+// /public/ at the root of the dev server, so a plain fetch off request.url
+// works there. We try the binding first and fall back transparently.
 const FONT_REGULAR_PATH = '/fonts/Inter-Regular.ttf';
 const FONT_SEMIBOLD_PATH = '/fonts/Inter-SemiBold.ttf';
 
 let cachedRegular: ArrayBuffer | null = null;
 let cachedSemibold: ArrayBuffer | null = null;
 
-async function loadFonts(originUrl: string) {
+async function fetchAsset(path: string, requestUrl: string): Promise<Response> {
+  const assets = (env as Cloudflare.Env & { ASSETS?: Fetcher }).ASSETS;
+  if (assets) {
+    // env.ASSETS.fetch only cares about pathname; host can be anything.
+    return assets.fetch(new URL(path, 'https://assets.local'));
+  }
+  // astro dev: no binding, Vite serves /public/ at root.
+  return fetch(new URL(path, requestUrl));
+}
+
+async function loadFonts(requestUrl: string) {
   if (!cachedRegular) {
-    const r = await fetch(new URL(FONT_REGULAR_PATH, originUrl));
+    const r = await fetchAsset(FONT_REGULAR_PATH, requestUrl);
     if (!r.ok) {
       throw new Error(
-        `Inter-Regular.ttf not found at ${FONT_REGULAR_PATH}. ` +
+        `Inter-Regular.ttf not found at ${FONT_REGULAR_PATH} (status ${r.status}). ` +
           `Place Inter Regular and SemiBold .ttf files under public/fonts/.`,
       );
     }
     cachedRegular = await r.arrayBuffer();
   }
   if (!cachedSemibold) {
-    const r = await fetch(new URL(FONT_SEMIBOLD_PATH, originUrl));
+    const r = await fetchAsset(FONT_SEMIBOLD_PATH, requestUrl);
     if (!r.ok) {
-      throw new Error(`Inter-SemiBold.ttf not found at ${FONT_SEMIBOLD_PATH}.`);
+      throw new Error(
+        `Inter-SemiBold.ttf not found at ${FONT_SEMIBOLD_PATH} (status ${r.status}).`,
+      );
     }
     cachedSemibold = await r.arrayBuffer();
   }
