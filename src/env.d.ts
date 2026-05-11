@@ -9,6 +9,13 @@ declare namespace Cloudflare {
     DB: D1Database;
     ANALYTICS: AnalyticsEngineDataset;
     OG_CACHE: KVNamespace;
+    /**
+     * Static asset fetcher — auto-injected by @astrojs/cloudflare. Lets the
+     * worker read files from /public/ directly without an HTTP round-trip,
+     * which is needed because a worker fetching its own zone URL goes
+     * through edge plumbing that's unreliable for the worker's own assets.
+     */
+    ASSETS: Fetcher;
     ENVIRONMENT: string;
     /** Cloudflare account ID — set as a public var in wrangler.toml. */
     CF_ACCOUNT_ID?: string;
