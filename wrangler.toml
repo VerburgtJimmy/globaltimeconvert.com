@@ -16,6 +16,9 @@ preview_urls = true
 pattern = "globaltimeconvert.com"
 custom_domain = true
 
+[limits]
+cpu_ms = 30000
+
 # Note: `main` and `[assets]` are intentionally omitted here — the Astro
 # Cloudflare adapter generates its own deployment manifest under
 # `dist/` after `astro build`. This file holds only the shared bindings
