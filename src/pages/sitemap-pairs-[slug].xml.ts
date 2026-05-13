@@ -4,13 +4,20 @@ import { isValidLocale, pathFor, type Locale } from '../lib/i18n';
 import { PAIRS_URL_LIMIT } from '../lib/sitemap';
 
 // One chunk of directional city-pair URLs for one locale.
-// Sharded because: 1000 cities → 999,000 directional pairs per locale,
+// Sharded because at 2,500 cities → ~6.25M directional pairs per locale,
 // far over the sitemap-spec 50k-URL/file limit.
 //
-// Routing: /sitemap-pairs-{lang}-{chunk}.xml, chunk is 0-indexed.
-// Each chunk emits exactly PAIRS_URL_LIMIT pairs (the tail chunk may be shorter).
-// The pair order is deterministic (DB priority desc, then slug asc) so the
-// same chunk index always returns the same slice across requests.
+// Routing: /sitemap-pairs-{lang}-{chunk}.xml — chunk is 0-indexed. Each
+// chunk emits exactly PAIRS_URL_LIMIT pairs (the tail chunk may be
+// shorter). Pair order is deterministic (DB priority desc, then slug asc)
+// so the same chunk index always returns the same slice across requests.
+//
+// Implementation note: we use a single [slug] param and parse it manually
+// rather than [lang]-[chunk] separately, because the "zh-CN" locale itself
+// contains a hyphen — Astro's two-param matcher couldn't unambiguously
+// split "zh-CN-0" and was returning lang="zh", chunk="CN-0", which 404'd
+// in the integer check. Splitting on the *last* dash here gives the right
+// (lang, chunk) pair for every supported locale.
 
 interface SlugRow {
   slug: string;
@@ -18,15 +25,21 @@ interface SlugRow {
 
 export const prerender = false;
 
-
 export const GET: APIRoute = async ({ site, params }) => {
-  const lang = params.lang;
-  const chunkStr = params.chunk;
+  const rawSlug = params.slug ?? '';
+  const lastDash = rawSlug.lastIndexOf('-');
+  if (lastDash <= 0 || lastDash === rawSlug.length - 1) {
+    return new Response('Not found', { status: 404 });
+  }
+  const lang = rawSlug.slice(0, lastDash);
+  const chunkStr = rawSlug.slice(lastDash + 1);
   if (!isValidLocale(lang)) {
     return new Response('Not found', { status: 404 });
   }
-  const chunk = Number.parseInt(chunkStr ?? '', 10);
-  if (!Number.isInteger(chunk) || chunk < 0) {
+  const chunk = Number.parseInt(chunkStr, 10);
+  // Strict integer check — `String(chunk) === chunkStr` rejects things
+  // like "0.5", "01", or "0abc" that parseInt would silently accept.
+  if (!Number.isInteger(chunk) || chunk < 0 || String(chunk) !== chunkStr) {
     return new Response('Not found', { status: 404 });
   }
 
