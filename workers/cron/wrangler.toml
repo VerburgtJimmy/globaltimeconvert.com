@@ -1,0 +1,27 @@
+# Cron-only Worker. Lives alongside the main Astro app but is deployed as
+# a separate Worker so the main app's entry stays focused on HTTP. This
+# Worker has no routes, no public surface — its only job is to fire on a
+# Cron Trigger and POST to the main app's /api/cron/* endpoints.
+#
+# Deploy:
+#   cd workers/cron && npx wrangler deploy
+#   npx wrangler secret put CRON_TOKEN   # paste the same secret as on
+#                                        # the main worker
+
+name = "globaltimeconvert-cron"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 03:00 UTC daily. Quiet hour globally; well clear of typical bot crawl
+# bursts. Single trigger keeps the schedule simple — add more entries
+# (e.g. weekly OG pre-warm) as further pre-compute jobs land.
+[triggers]
+crons = ["0 3 * * *"]
+
+[observability]
+enabled = true
+
+# CRON_TOKEN is the shared secret with the main worker. Set via:
+#   npx wrangler secret put CRON_TOKEN
+# Use the same value as on the main worker so the auth check passes.
