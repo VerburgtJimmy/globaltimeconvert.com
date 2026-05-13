@@ -7,6 +7,7 @@
 import Layout from '../Layout.astro';
 import YourTime from '../islands/YourTime.svelte';
 import FaqList from '../FaqList.astro';
+import { env } from 'cloudflare:workers';
 import { getDb, getCitiesAcrossZones, type CityWithCountry } from '../../lib/db';
 import {
   formatInZone,
@@ -20,6 +21,35 @@ import {
 import { t, pathFor, diffPhrase, type Locale } from '../../lib/i18n';
 import { buildFAQPage, buildPlace, type FaqItem } from '../../lib/seo';
 
+interface DstCacheEntry {
+  at?: string;
+  forward?: boolean;
+  noDst?: boolean;
+}
+
+/**
+ * Read pre-computed next-DST-transition from the DST_NEXT KV namespace.
+ * Returns null on cache miss so the caller can fall back to inline compute
+ * (which is roughly 5-10 ms CPU; the KV path is sub-millisecond).
+ */
+async function nextDstFromKv(tz: string): Promise<
+  { at: Date; forward: boolean } | 'no-dst' | null
+> {
+  const kv = (env as Cloudflare.Env & { DST_NEXT?: KVNamespace }).DST_NEXT;
+  if (!kv) return null;
+  try {
+    const cached = (await kv.get(`dst-next:${tz}`, 'json')) as
+      | DstCacheEntry
+      | null;
+    if (!cached) return null;
+    if (cached.noDst) return 'no-dst';
+    if (cached.at) return { at: new Date(cached.at), forward: !!cached.forward };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 interface Props {
   lang: Locale;
   city: CityWithCountry;
@@ -30,8 +60,23 @@ const { lang, city } = Astro.props;
 const now = new Date();
 const time = formatInZone(now, city.timezone_id);
 const offset = formatOffset(time.offsetMin);
-const dst = observesDst(city.timezone_id);
-const dstNext = dst ? nextDstTransition(city.timezone_id, now) : null;
+
+// DST status + next transition. Try the pre-computed KV cache first; if it
+// misses (deploy before first cron run, or TTL expired), fall back to
+// inline compute. The inline path is ~5-10 ms CPU; the KV path is ~1 ms.
+let dst: boolean;
+let dstNext: { at: Date; forward: boolean } | null;
+const cachedDst = await nextDstFromKv(city.timezone_id);
+if (cachedDst === 'no-dst') {
+  dst = false;
+  dstNext = null;
+} else if (cachedDst) {
+  dst = true;
+  dstNext = cachedDst;
+} else {
+  dst = observesDst(city.timezone_id);
+  dstNext = dst ? nextDstTransition(city.timezone_id, now) : null;
+}
 
 // Locale-aware date string for the DST next-change line.
 function dateLabelFor(at: Date, lang: Locale): string {

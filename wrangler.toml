@@ -56,15 +56,23 @@ id = "053181b131944f2c80a0d4450c119f18"
 binding = "SESSION"
 id = "042dd27ca50941f49582616949bbe846"
 
+# Pre-computed next-DST-transition per IANA zone. Populated daily by the
+# `workers/cron/` cron worker (which hits /api/cron/dst-rollover). City
+# pages read from here in O(1) instead of doing the 420-day walk inline.
+#
+# Create once:
+#   npx wrangler kv namespace create DST_NEXT
+# Paste the printed id below.
+[[kv_namespaces]]
+binding = "DST_NEXT"
+id = "29aaacbf684b498fb0e47b53a17b8cbd"
+
 # ---------------------------------------------------------------------------
 # Cron triggers
 # ---------------------------------------------------------------------------
-# Phase 8 introduced lazy salt rotation (no cron needed) and Phase 9 reads AE
-# directly via SQL API (no D1 rollup cron needed). Crons are reserved for
-# future periodic tasks; an empty list disables them entirely. Re-enable when
-# we add background work.
-# [triggers]
-# crons = []
+# Cron triggers live in `workers/cron/wrangler.toml` (separate worker) so
+# the Astro app's worker entry stays focused on HTTP. The cron worker fires
+# scheduled() and POSTs to /api/cron/dst-rollover with a shared secret.
 
 # ---------------------------------------------------------------------------
 # Vars
