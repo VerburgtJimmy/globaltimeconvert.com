@@ -13,11 +13,18 @@ main = "src/index.ts"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
-# 03:00 UTC daily. Quiet hour globally; well clear of typical bot crawl
-# bursts. Single trigger keeps the schedule simple — add more entries
-# (e.g. weekly OG pre-warm) as further pre-compute jobs land.
+# Schedules:
+#   "0 3 * * *"    daily 03:00 UTC  → DST rollover (pre-compute next
+#                                      transitions per IANA zone)
+#   "0 3 * * SUN"  weekly Sun 03:00 → OG cache pre-warm (hit ~345
+#                                      OG URLs so KV stays populated)
+# Both at 03:00 UTC — quiet hour globally and well clear of typical
+# bot crawl bursts. Dispatched in src/index.ts by event.cron.
+#
+# Note: Cloudflare's cron parser rejects `0` for Sunday in the
+# day-of-week field; use the named form (SUN) or 7 instead.
 [triggers]
-crons = ["0 3 * * *"]
+crons = ["0 3 * * *", "0 3 * * SUN"]
 
 [observability]
 enabled = true
